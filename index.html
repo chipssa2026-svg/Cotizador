@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador Premium | Chips, S.A.</title>
+    <link rel="icon" type="image/png" href="Logo.png">
+    <meta name="description" content="Sistema profesional de cotización para Chips, S.A. Gestión de inventario y generación de cotizaciones en tiempo real.">
+    <meta name="keywords" content="cotizador, chips sa, inventario, productos, honduras">
+    <meta name="author" content="Chips, S.A.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel Support -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header" style="text-align:center; padding: 1.5rem; margin-bottom: 1rem;">
+                <img src="Logo.png" alt="Logo Chips, S.A." style="width: 100%; height: auto; padding: 0 10px; margin-bottom: 0.5rem;">
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px;">Cotizador<span style="color: #22c55e">PRO</span></div>
+            </div>
+            <nav>
+                <button class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="inventory">
+                    <i data-lucide="package"></i>
+                    <span>Inventario</span>
+                </button>
+                <button class="nav-item" data-view="customers">
+                    <i data-lucide="users"></i>
+                    <span>Clientes</span>
+                </button>
+                <button class="nav-item" data-view="sellers">
+                    <i data-lucide="contact"></i>
+                    <span>Vendedores</span>
+                </button>
+                <button class="nav-item" data-view="new-quote">
+                    <i data-lucide="file-plus"></i>
+                    <span>Nueva Cotización</span>
+                </button>
+                <button class="nav-item" data-view="history">
+                    <i data-lucide="history"></i>
+                    <span>Historial</span>
+                </button>
+                <button class="nav-item" data-view="users">
+                    <i data-lucide="user-cog"></i>
+                    <span>Usuarios</span>
+                </button>
+            </nav>
+
+            <div class="user-sidebar-profile" onclick="window.app.openProfileModal()" style="margin-top:auto; padding: 1rem; border-top: 1px solid var(--border-color); cursor:pointer; display:flex; align-items:center; gap:12px; transition:all 0.2s;">
+                <div id="u-avatar" style="width:40px; height:40px; background:var(--primary-color); border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:1.1rem; box-shadow: var(--shadow-sm);">?</div>
+                <div style="overflow:hidden;">
+                    <div id="u-name" style="font-weight:700; font-size:0.85rem; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Usuario...</div>
+                    <div id="u-role" style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">Rol...</div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="theme-toggle">
+                    <i data-lucide="moon" id="theme-icon"></i>
+                    <span>Modo Oscuro</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="view-title">Dashboard</h1>
+            </header>
+
+            <section id="content-area">
+                <!-- Content will be injected here dynamicly -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Notifications -->
+    <div id="notification-container"></div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="hidden"></div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Módulos de Procesos (Diferentes archivos para fácil edición) -->
+    <script src="js/users.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/customers.js"></script>
+    <script src="js/sellers.js"></script>
+    <script src="js/new-quote.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.app && window.app.init) {
+                window.app.init();
+            }
+        });
+    </script>
+</body>
+</html>

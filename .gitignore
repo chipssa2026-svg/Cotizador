@@ -1,0 +1,12 @@
+# Ignorar carpeta local de respaldos
+_backups/
+
+# Ignorar archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos temporales del editor
+.vscode/
+.gemini/
+*.log
+*.tmp
