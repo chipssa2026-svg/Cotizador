@@ -276,7 +276,12 @@ window.app = {
                 "Detalle": JSON.stringify(q.items || []),
                 "Direccion": q.address || ""
             })),
-            "config": { "nextNumber": this.data.config.nextNumber }
+            "config": { 
+                "nextNumber": this.data.config.nextNumber,
+                "lastProductImport": this.data.lastProductImport,
+                "lastCustomerImport": this.data.lastCustomerImport,
+                "lastSellerImport": this.data.lastSellerImport
+            }
         };
 
         try {
@@ -294,14 +299,12 @@ window.app = {
 
 
     // --- Importaciones Masivas (Desde Excel con SheetJS) ---
-    async importFromExcel(e) { /* Importar Productos */ 
+    async importFromExcel(e) { 
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet);
+            const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
             this.data.productos = json.map(p => {
                 const k = Object.keys(p);
                 const get = (words) => {
@@ -309,10 +312,10 @@ window.app = {
                     return found ? p[found] : '';
                 };
                 return {
-                    code: String(get(['producto', 'codigo', 'code', 'cod']) || '').trim(),
+                    code: this.cleanCode(get(['producto', 'codigo', 'code', 'cod'])),
                     description: String(get(['descripcion', 'desc', 'nombre']) || '').trim(),
-                    stock: parseFloat(get(['existencia', 'stock', 'cantidad', 'balance', 'qty'])) || 0,
-                    price: parseFloat(get(['precio', 'valor', 'monto', 'price'])) || 0
+                    stock: this.parseNum(get(['existencia', 'stock', 'cantidad'])),
+                    price: this.parseNum(get(['precio', 'valor', 'price']))
                 };
             });
             this.data.lastProductImport = this.getAppTimestamp();
@@ -769,31 +772,6 @@ window.app = {
         `;
         modal.classList.remove('hidden');
         lucide.createIcons();
-    },
-
-    async importFromExcel(e) { 
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
-            this.data.productos = json.map(p => {
-                const k = Object.keys(p);
-                const get = (words) => {
-                    const found = k.find(key => words.some(w => key.toLowerCase().includes(w)));
-                    return found ? p[found] : '';
-                };
-                return {
-                    code: this.cleanCode(get(['producto', 'codigo', 'code', 'cod'])),
-                    description: String(get(['descripcion', 'desc', 'nombre']) || '').trim(),
-                    stock: this.parseNum(get(['existencia', 'stock', 'cantidad'])),
-                    price: this.parseNum(get(['precio', 'valor', 'price']))
-                };
-            });
-            this.data.lastProductImport = this.getAppTimestamp();
-            this.saveDB(); this.render('inventory');
-        };
-        reader.readAsArrayBuffer(file);
     },
 
     cleanCode(code) {
