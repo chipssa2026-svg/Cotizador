@@ -276,6 +276,13 @@ window.app = {
                 "Detalle": JSON.stringify(q.items || []),
                 "Direccion": q.address || ""
             })),
+            "users": this.data.usuarios.map(u => ({
+                "Usuario": u.Usuario || u.user,
+                "Clave": u.Clave || u.pass,
+                "Nombre": u.Nombre || u.name,
+                "Rol": u.Rol || u.role,
+                "CodigoVendedor": u.CodigoVendedor || u.sellerCode || ""
+            })),
             "config": { 
                 "nextNumber": this.data.config.nextNumber,
                 "lastProductImport": this.data.lastProductImport,
