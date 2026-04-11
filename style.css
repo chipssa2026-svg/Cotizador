@@ -439,8 +439,8 @@ input, select, textarea {
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    background: var(--bg-card);
-    color: var(--text-primary);
+    background: var(--card-bg);
+    color: var(--text-main);
     font-size: 0.95rem;
     transition: all 0.2s ease;
     height: 42px;

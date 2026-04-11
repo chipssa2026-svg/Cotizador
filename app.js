@@ -500,12 +500,12 @@ window.app = {
         console.log("🆕 Abriendo formulario de Nuevo Usuario...");
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
-            <div class="modal glass animate-slide-up" style="background:white; padding:30px; border-radius:24px; width:450px;">
-                <h3 class="mb-4">Nuevo Registro de Usuario</h3>
+            <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:30px; border-radius:24px; width:450px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                <h3 class="mb-4" style="color:var(--text-main);">Nuevo Registro de Usuario</h3>
                 <div style="display:flex; flex-direction:column; gap:15px;">
-                    <div><label>Usuario (ID)</label><input type="text" id="m-user" placeholder="ejm: marvin.m" style="width:100%;"></div>
-                    <div><label>Nombre Completo</label><input type="text" id="m-name" placeholder="Nombre completo" style="width:100%;"></div>
-                    <div><label>Rol del Sistema</label>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Usuario (ID)</label><input type="text" id="m-user" placeholder="ejm: marvin.m" style="width:100%;"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Nombre Completo</label><input type="text" id="m-name" placeholder="Nombre completo" style="width:100%;"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Rol del Sistema</label>
                         <select id="m-role" style="width:100%;">
                             <option value="Administrador">Administrador</option>
                             <option value="Gerencia">Gerencia</option>
@@ -514,14 +514,14 @@ window.app = {
                             <option value="Facturacion">Facturación</option>
                         </select>
                     </div>
-                    <div id="seller-field" style="display:none;">
-                        <label>Vincular con Vendedor (Nube)</label>
+                        <div id="seller-field" style="display:none;">
+                        <label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Vincular con Vendedor (Nube)</label>
                         <select id="m-seller-code" style="width:100%;">
                             <option value="">-- Seleccione un vendedor --</option>
                             ${this.data.vendedores.map(v => `<option value="${v.id}">${v.id} - ${v.name}</option>`).join('')}
                         </select>
                     </div>
-                    <div><label>Contraseña</label><input type="password" id="m-pass" placeholder="••••••••" style="width:100%;"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Contraseña</label><input type="password" id="m-pass" placeholder="••••••••" style="width:100%;"></div>
                 </div>
                 <div class="flex-end mt-6" style="gap:10px;">
                     <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
@@ -572,12 +572,12 @@ window.app = {
 
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
-            <div class="modal glass animate-slide-up" style="background:white; padding:30px; border-radius:24px; width:450px;">
-                <h3 class="mb-4">Modificar Usuario</h3>
+            <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:30px; border-radius:24px; width:450px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                <h3 class="mb-4" style="color:var(--text-main);">Modificar Usuario</h3>
                 <div style="display:flex; flex-direction:column; gap:15px;">
-                    <div><label>Usuario (ID)</label><input type="text" id="m-user" value="${u.Usuario || u.user}" disabled style="width:100%; background:#f1f5f9;"></div>
-                    <div><label>Nombre Completo</label><input type="text" id="m-name" value="${u.Nombre || u.name}" style="width:100%;"></div>
-                    <div><label>Rol del Sistema</label>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Usuario (ID)</label><input type="text" id="m-user" value="${u.Usuario || u.user}" disabled style="width:100%; background:var(--bg-color); color:var(--text-muted);"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Nombre Completo</label><input type="text" id="m-name" value="${u.Nombre || u.name}" style="width:100%;"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Rol del Sistema</label>
                         <select id="m-role" style="width:100%;">
                             <option value="Administrador" ${u.Rol === 'Administrador' ? 'selected' : ''}>Administrador</option>
                             <option value="Gerencia" ${u.Rol === 'Gerencia' ? 'selected' : ''}>Gerencia</option>
@@ -587,13 +587,13 @@ window.app = {
                         </select>
                     </div>
                     <div id="seller-field" style="display:${u.Rol === 'Vendedor' ? 'block' : 'none'};">
-                        <label>Vincular con Vendedor (Nube)</label>
+                        <label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Vincular con Vendedor (Nube)</label>
                         <select id="m-seller-code" style="width:100%;">
                             <option value="">-- Seleccione un vendedor --</option>
                             ${this.data.vendedores.map(v => `<option value="${v.id}" ${(u.CodigoVendedor || u.sellerCode) === v.id ? 'selected' : ''}>${v.id} - ${v.name}</option>`).join('')}
                         </select>
                     </div>
-                    <div><label>Contraseña</label><input type="password" id="m-pass" value="${u.Clave || u.pass}" style="width:100%;"></div>
+                    <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Contraseña</label><input type="password" id="m-pass" value="${u.Clave || u.pass}" style="width:100%;"></div>
                 </div>
                 <div class="flex-end mt-6" style="gap:10px;">
                     <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
@@ -631,7 +631,7 @@ window.app = {
     deleteUser(id) {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
-            <div class="modal glass animate-slide-up" style="background:white; padding:35px; border-radius:24px; width:400px; text-align:center;">
+            <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:35px; border-radius:24px; width:400px; text-align:center; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
                 <div style="width:60px; height:60px; background:#fee2e2; color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
                     <i data-lucide="alert-triangle" style="width:30px; height:30px;"></i>
                 </div>
@@ -699,11 +699,11 @@ window.app = {
                     <button class="btn btn-secondary" style="width:100%; display:flex; justify-content:center; align-items:center;" onclick="window.app.promptPasswordChange()">
                         <i data-lucide="key" style="margin-right:8px; width:16px;"></i> Cambiar Contraseña
                     </button>
-                    <button class="btn btn-outline" style="width:100%; border-color:var(--border-color); color:#ef4444; display:flex; justify-content:center; align-items:center;" onclick="window.app.logout()">
+                    <button class="btn btn-outline" style="width:100%; border: 1px solid var(--border-color); color:#ef4444; display:flex; justify-content:center; align-items:center;" onclick="window.app.logout()">
                         <i data-lucide="log-out" style="margin-right:8px; width:16px;"></i> Cerrar Sesión
                     </button>
                     <button class="btn btn-primary" style="margin-top:10px; width:100%; display:flex; justify-content:center; align-items:center;" onclick="document.getElementById('modal-container').classList.add('hidden')">
-                        Cancelar
+                        Cerrar
                     </button>
                 </div>
             </div>
@@ -720,13 +720,19 @@ window.app = {
                     <i data-lucide="shield-check" style="width:30px; height:30px;"></i>
                 </div>
                 <h3 style="margin-bottom:20px; color:var(--text-main);">Seguridad de Cuenta</h3>
-                <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
-                    <input type="password" id="old-p-input" placeholder="Contraseña Actual" class="btn btn-secondary" style="width:100%; text-align:center; cursor:text;">
-                    <input type="password" id="new-p-input" placeholder="Nueva Contraseña" class="btn btn-secondary" style="width:100%; text-align:center; cursor:text;">
+                <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px; text-align:left;">
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Contraseña Actual</label>
+                        <input type="password" id="old-p-input" placeholder="••••••••" style="width:100%;">
+                    </div>
+                    <div>
+                        <label style="color:var(--text-muted); font-size:0.8rem; font-weight:600; display:block; margin-bottom:5px;">Nueva Contraseña</label>
+                        <input type="password" id="new-p-input" placeholder="Min. 4 caracteres" style="width:100%;">
+                    </div>
                 </div>
                 <div style="display:flex; gap:10px; justify-content:center;">
-                    <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
-                    <button class="btn btn-primary" onclick="window.app.executePasswordChange()">Guardar</button>
+                    <button class="btn btn-secondary" onclick="window.app.openProfileModal()">Volver</button>
+                    <button class="btn btn-primary" onclick="window.app.executePasswordChange()">Guardar Cambios</button>
                 </div>
             </div>
         `;
