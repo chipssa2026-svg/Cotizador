@@ -825,8 +825,8 @@ window.app = {
         let s = String(val).trim();
         // Si no es puramente numérico (ej: "C/F"), lo devolvemos tal cual
         if (!/^\d+$/.test(s)) return s;
-        // Rellenar con ceros a la izquierda hasta los 15 caracteres requeridos
-        return s.padStart(15, '0');
+        // Rellenar con ceros a la izquierda hasta los 14 caracteres requeridos
+        return s.padStart(14, '0');
     },
 
     getLocalDate(date = new Date()) { return date.toISOString().split('T')[0]; },
