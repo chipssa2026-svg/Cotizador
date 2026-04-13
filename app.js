@@ -329,13 +329,15 @@ window.app = {
         };
 
         try {
-            fetch(this.scriptUrl, { 
+            return fetch(this.scriptUrl, { 
                 method: 'POST', 
                 mode: 'no-cors', 
                 body: JSON.stringify(payload)
             });
-            console.log("📡 Sincronización realizada.");
-        } catch (e) { console.error(e); }
+        } catch (error) {
+            console.error('Error enviando a DB:', error);
+            this.notify('Error al sincronizar con la nube', 'error');
+        }
     },
 
 
@@ -1608,12 +1610,12 @@ window.app = {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(worksheet);
 
-            // Filtrar productos válidos
-            this.data.productos = rows.filter(r => r.Producto || r.PRODUCTO).map(r => ({
-                code: String(r.Producto || r.PRODUCTO || '').trim(),
-                description: String(r.Descripcion || r.DESCRIPCION || '').trim(),
-                stock: parseInt(r.ExistenciaActual || r.EXISTENCIA || 0) || 0,
-                price: parseFloat(r.PrecioMayorista || r.PRECIO || 0) || 0
+            // Filtrar productos válidos (soporta Producto, Codigo, Item)
+            this.data.productos = rows.filter(r => r.Producto || r.PRODUCTO || r.Codigo || r.CODIGO || r.Item).map(r => ({
+                code: String(r.Producto || r.PRODUCTO || r.Codigo || r.CODIGO || r.Item || '').trim(),
+                description: String(r.Descripcion || r.DESCRIPCION || r.Nombre || r.NOMBRE || r.Description || '').trim(),
+                stock: parseInt(r.ExistenciaActual || r.EXISTENCIA || r.Stock || r.STOCK || r.CANTIDAD || 0) || 0,
+                price: parseFloat(r.PrecioMayorista || r.PRECIO || r.Precio || r.PRICE || 0) || 0
             }));
 
             this.data.lastProductImport = this.getAppTimestamp();
@@ -1634,15 +1636,15 @@ window.app = {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(worksheet);
 
-            // Filtrar clientes válidos
-            this.data.clientes = rows.filter(r => r.RazonSocial || r.Cliente || r.RAZON_SOCIAL).map(r => ({
-                id: clean(r, ['Cliente', 'cliente', 'Codigo', 'codigo']),
-                razonSocial: getVal(r, ['razon', 'social', 'nombre', 'RazonSocial']),
-                nombreComercial: getVal(r, ['comercial', 'nombre', 'NombreComercial']),
-                rtn: this.formatRTN(getVal(r, ['RTN', 'rtn', 'fiscal'])),
-                address: getVal(r, ['direccion', 'address', 'Direccion']),
-                phones: getVal(r, ['telefono', 'phone', 'Telefonos']),
-                email: getVal(r, ['correo', 'email', 'Correo'])
+            // Filtrar clientes válidos (soporta RazonSocial, Cliente, Nombre, Correo)
+            this.data.clientes = rows.filter(r => r.RazonSocial || r.Cliente || r.RAZON_SOCIAL || r.Nombre || r.NOMBRE).map(r => ({
+                id: clean(r, ['Cliente', 'cliente', 'Codigo', 'codigo', 'ID', 'ID_CLIENTE']),
+                razonSocial: getVal(r, ['razon', 'social', 'nombre', 'RazonSocial', 'RAZON_SOCIAL', 'NOMBRE']),
+                nombreComercial: getVal(r, ['comercial', 'nombre', 'NombreComercial', 'Nombre_Comercial']),
+                rtn: this.formatRTN(getVal(r, ['RTN', 'rtn', 'fiscal', 'RTN_CLIENTE'])),
+                address: getVal(r, ['direccion', 'address', 'Direccion', 'DIRECCION', 'UBICACION']),
+                phones: getVal(r, ['telefono', 'phone', 'Telefonos', 'TELEFONOS', 'CELULAR']),
+                email: getVal(r, ['correo', 'email', 'Correo', 'CORREO', 'MAIL'])
             }));
 
             this.data.lastCustomerImport = this.getAppTimestamp();
