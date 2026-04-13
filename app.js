@@ -216,8 +216,8 @@ window.app = {
                 id: q.id || get(['id']) || Date.now() + Math.random(),
                 number: String(get(['numero', 'number', 'cotizacion', 'folio']) || '').trim(),
                 customerName: String(get(['Cliente', 'cliente', 'customer', 'razon']) || 'Cliente Desconocido').trim(),
-                customerCode: get(['CodigoCliente', 'codigocliente', 'Codigo', 'codigo', 'IdCliente']) || '',
-                rtn: get(['RTN', 'rtn', 'id', 'fiscal']) || '',
+                customerCode: get(['IdCliente', 'id_cliente', 'CodigoCliente', 'codigocliente']) || '',
+                rtn: this.formatRTN(get(['RTN', 'rtn', 'fiscal', 'id_fiscal'])),
                 address: get(['Direccion', 'direccion', 'address', 'ubicacion']) || '',
                 phones: get(['Telefono', 'telefono', 'phone', 'telefonos', 'celular']) || '',
                 date: get(['date', 'fecha']) || new Date().toISOString(),
@@ -242,7 +242,7 @@ window.app = {
                 id: clean(c, ['Cliente', 'cliente', 'Codigo', 'codigo']), // Prioridad absoluta al campo cliente de tu hoja
                 razonSocial: getVal(c, ['razon', 'social', 'nombre']),
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
-                rtn: this.formatRTN(getVal(c, ['rtn', 'fiscal', 'id_fiscal'])),
+                rtn: this.formatRTN(getVal(c, ['RTN', 'rtn', 'fiscal', 'id_fiscal', 'RTN_CLIENTE'])),
                 address: getVal(c, ['direccion', 'address']),
                 phones: getVal(c, ['telefono', 'phone']),
                 email: getVal(c, ['correo', 'email', 'mail'])
@@ -825,12 +825,15 @@ window.app = {
 
     // --- UTILIDADES ---
     formatRTN(val) {
-        if (!val) return '';
-        let s = String(val).trim();
-        // Si no es puramente numérico (ej: "C/F"), lo devolvemos tal cual
-        if (!/^\d+$/.test(s)) return s;
+        if (!val) return 'C/F';
+        let s = String(val).trim().toUpperCase();
+        if (s === 'C/F' || s === 'CF') return 'C/F';
+        
+        let digits = s.replace(/\D/g, ''); // Quitar cualquier cosa que no sea número
+        if (!digits) return 'C/F';
+        
         // Rellenar con ceros a la izquierda hasta los 14 caracteres requeridos
-        return s.padStart(14, '0');
+        return digits.padStart(14, '0');
     },
 
     getLocalDate(date = new Date()) { return date.toISOString().split('T')[0]; },
@@ -1329,6 +1332,15 @@ window.app = {
 
     previewQuote(id) {
         const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
+        if (q && q.customerCode) {
+            // Sincronización dinámica: Usar el código para traer el RTN más reciente del catálogo
+            const client = this.data.clientes.find(c => String(c.id) === String(q.customerCode));
+            if (client) {
+                q.rtn = client.rtn || q.rtn;
+                q.address = client.address || q.address;
+                q.phones = client.phones || q.phones;
+            }
+        }
         if (q) this.render('preview', q);
     },
 
