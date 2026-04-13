@@ -240,7 +240,7 @@ window.app = {
                 id: clean(c, ['codigo', 'id', 'cliente', 'cod']),
                 razonSocial: getVal(c, ['razon', 'social', 'nombre']),
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
-                rtn: getVal(c, ['rtn', 'id', 'fiscal']),
+                rtn: this.formatRTN(getVal(c, ['rtn', 'id', 'fiscal'])),
                 address: getVal(c, ['direccion', 'address']),
                 phones: getVal(c, ['telefono', 'phone']),
                 email: getVal(c, ['correo', 'email', 'mail'])
@@ -380,7 +380,7 @@ window.app = {
                     id: String(get(['cliente', 'codigo', 'id', 'no.']) || '').replace(/^0+/, '') || '0',
                     razonSocial: get(['razonsocial', 'razon', 'social', 'nombre']),
                     nombreComercial: get(['nombrecomercial', 'comercial', 'fantasia']),
-                    rtn: get(['idtributario', 'rtn', 'fiscal', 'nrc']),
+                    rtn: this.formatRTN(get(['idtributario', 'rtn', 'fiscal', 'nrc'])),
                     address: get(['direccion', 'address', 'ubicacion']),
                     phones: get(['telefonos', 'telefono', 'phone', 'celular']),
                     email: get(['correo', 'email', 'mail'])
@@ -820,6 +820,15 @@ window.app = {
     },
 
     // --- UTILIDADES ---
+    formatRTN(val) {
+        if (!val) return '';
+        let s = String(val).trim();
+        // Si no es puramente numérico (ej: "C/F"), lo devolvemos tal cual
+        if (!/^\d+$/.test(s)) return s;
+        // Rellenar con ceros a la izquierda hasta los 15 caracteres requeridos
+        return s.padStart(15, '0');
+    },
+
     getLocalDate(date = new Date()) { return date.toISOString().split('T')[0]; },
     getAppTimestamp() { 
         const d = new Date();
@@ -912,7 +921,7 @@ window.app = {
             if (customer) {
                 // Rellenar campos individuales
                 document.getElementById('quote-customer').value = customer.razonSocial;
-                document.getElementById('quote-rtn').value = customer.rtn || '';
+                document.getElementById('quote-rtn').value = this.formatRTN(customer.rtn || '');
                 document.getElementById('quote-address').value = customer.address || '';
                 const emailInput = document.getElementById('quote-email');
                 if (emailInput) emailInput.value = customer.email || '';
@@ -1237,7 +1246,7 @@ window.app = {
 
     saveFinalQuote() {
         const customer = document.getElementById('quote-customer').value;
-        const rtn = document.getElementById('quote-rtn').value;
+        const rtn = this.formatRTN(document.getElementById('quote-rtn').value);
         const address = document.getElementById('quote-address').value;
         const email = document.getElementById('quote-email').value;
         const seller = document.getElementById('quote-vendedor').value;
