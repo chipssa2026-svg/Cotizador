@@ -262,10 +262,16 @@ window.app = {
         this.data.lastSellerImport = conf.lastSellerImport || data.lastSellerImport || null;
     },
 
-    async saveDB() {
-        const payload = {
-            "products": this.data.productos.map(p => ({ "Producto": p.code, "Descripcion": p.description, "ExistenciaActual": p.stock, "PrecioMayorista": p.price })),
-            "customers": this.data.clientes.map(c => ({ 
+    async saveDB(tableKey = null) {
+        const payload = {};
+        
+        // Si specificKey es nulo, enviamos todo (legacy). Si no, solo la tabla necesaria.
+        if (tableKey === 'products' || !tableKey) {
+            payload.products = this.data.productos.map(p => ({ "Producto": p.code, "Descripcion": p.description, "ExistenciaActual": p.stock, "PrecioMayorista": p.price }));
+        }
+        
+        if (tableKey === 'customers' || !tableKey) {
+            payload.customers = this.data.clientes.map(c => ({ 
                 "Cliente": c.id, 
                 "RazonSocial": c.razonSocial, 
                 "NombreComercial": c.nombreComercial,
@@ -273,9 +279,15 @@ window.app = {
                 "Direccion": c.address,
                 "Telefonos": c.phones,
                 "Correo": c.email || ""
-            })),
-            "sellers": this.data.vendedores.map(v => ({ "Codigo": v.id, "Nombre": v.name })),
-            "quotes": this.data.cotizaciones.map(q => ({
+            }));
+        }
+
+        if (tableKey === 'sellers' || !tableKey) {
+            payload.sellers = this.data.vendedores.map(v => ({ "Codigo": v.id, "Nombre": v.name }));
+        }
+
+        if (tableKey === 'quotes' || !tableKey) {
+            payload.quotes = this.data.cotizaciones.map(q => ({
                 "ID": q.id, 
                 "Numero": q.number, 
                 "Cliente": q.customerName, 
@@ -297,20 +309,23 @@ window.app = {
                 "Correo": q.email || "",
                 "Moneda": q.currency || "LPS",
                 "TasaCambio": q.exchangeRate || 1
-            })),
-            "users": this.data.usuarios.map(u => ({
-                "Usuario": u.Usuario || u.user,
-                "Clave": u.Clave || u.pass,
-                "Nombre": u.Nombre || u.name,
-                "Rol": u.Rol || u.role,
-                "CodigoVendedor": u.CodigoVendedor || u.sellerCode || ""
-            })),
-            "config": { 
-                "nextNumber": this.data.config.nextNumber,
-                "lastProductImport": this.data.lastProductImport,
-                "lastCustomerImport": this.data.lastCustomerImport,
-                "lastSellerImport": this.data.lastSellerImport
-            }
+            }));
+        }
+
+        // Configuración y otros siempre se envían para mantener consistencia
+        payload.users = this.data.usuarios.map(u => ({
+            "Usuario": u.Usuario || u.user,
+            "Clave": u.Clave || u.pass,
+            "Nombre": u.Nombre || u.name,
+            "Rol": u.Rol || u.role,
+            "CodigoVendedor": u.CodigoVendedor || u.sellerCode || ""
+        }));
+
+        payload.config = { 
+            "nextNumber": this.data.config.nextNumber,
+            "lastProductImport": this.data.lastProductImport,
+            "lastCustomerImport": this.data.lastCustomerImport,
+            "lastSellerImport": this.data.lastSellerImport
         };
 
         try {
@@ -1581,5 +1596,83 @@ window.app = {
                 }
             }
         }, 300);
+    },
+
+    async importFromExcel(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(worksheet);
+
+            // Filtrar productos válidos
+            this.data.productos = rows.filter(r => r.Producto || r.PRODUCTO).map(r => ({
+                code: String(r.Producto || r.PRODUCTO || '').trim(),
+                description: String(r.Descripcion || r.DESCRIPCION || '').trim(),
+                stock: parseInt(r.ExistenciaActual || r.EXISTENCIA || 0) || 0,
+                price: parseFloat(r.PrecioMayorista || r.PRECIO || 0) || 0
+            }));
+
+            this.data.lastProductImport = this.getAppTimestamp();
+            await this.saveDB('products'); // Sincronización ligera
+            this.render('inventory');
+            this.notify(`¡${this.data.productos.length} productos importados con éxito!`);
+        };
+        reader.readAsArrayBuffer(file);
+    },
+
+    async importCustomersFromExcel(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(worksheet);
+
+            // Filtrar clientes válidos
+            this.data.clientes = rows.filter(r => r.RazonSocial || r.Cliente || r.RAZON_SOCIAL).map(r => ({
+                id: clean(r, ['Cliente', 'cliente', 'Codigo', 'codigo']),
+                razonSocial: getVal(r, ['razon', 'social', 'nombre', 'RazonSocial']),
+                nombreComercial: getVal(r, ['comercial', 'nombre', 'NombreComercial']),
+                rtn: this.formatRTN(getVal(r, ['RTN', 'rtn', 'fiscal'])),
+                address: getVal(r, ['direccion', 'address', 'Direccion']),
+                phones: getVal(r, ['telefono', 'phone', 'Telefonos']),
+                email: getVal(r, ['correo', 'email', 'Correo'])
+            }));
+
+            this.data.lastCustomerImport = this.getAppTimestamp();
+            await this.saveDB('customers'); // Sincronización ligera
+            this.render('customers');
+            this.notify(`¡${this.data.clientes.length} clientes importados con éxito!`);
+        };
+        reader.readAsArrayBuffer(file);
+    },
+
+    async importSellersFromExcel(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(worksheet);
+
+            this.data.vendedores = rows.filter(r => r.Codigo || r.Nombre).map(r => ({
+                id: String(r.Codigo || r.CODE || '').trim(),
+                name: String(r.Nombre || r.NAME || '').trim()
+            }));
+
+            this.data.lastSellerImport = this.getAppTimestamp();
+            await this.saveDB('sellers'); // Sincronización ligera
+            this.render('sellers');
+            this.notify(`¡${this.data.vendedores.length} vendedores registrados!`);
+        };
+        reader.readAsArrayBuffer(file);
     }
 };
