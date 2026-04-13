@@ -1283,12 +1283,18 @@ window.app = {
         const isv = subtotal * 0.15;
         const total = subtotal + isv;
 
+        const clientObj = this.data.clientes.find(c => c.razonSocial === customer);
+        const customerCode = clientObj ? clientObj.id : '';
+        const phones = clientObj ? clientObj.phones : '';
+
         const q = {
             id: Date.now(),
             number: String(this.data.config.nextNumber++),
             customerName: customer,
+            customerCode,
             rtn,
             address,
+            phones,
             email,
             seller,
             date: this.getLocalDate(),

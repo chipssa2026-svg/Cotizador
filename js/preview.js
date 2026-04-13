@@ -27,22 +27,29 @@ window.Views.preview = (q) => `
             </div>
         </div>
 
-        <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.2rem; border-bottom: 2px solid #22c55e; padding-bottom: 0.8rem; width: 100%;">
-            <div style="line-height: 1.4;">
-                <label style="color:#64748b; font-size:0.6rem; text-transform:uppercase; font-weight: 700;">Cliente:</label>
-                <p style="margin:0; font-size: 1.1rem; font-weight: 700; color: #1e293b;">${q.customerName}</p>
-                <p style="margin:0; font-size: 0.8rem; color: #334155;">${q.address || ''}</p>
-                <p style="margin:0; font-size: 0.8rem; color: #334155;">RTN: ${q.rtn || 'N/A'}</p>
-                ${q.email ? `<p style="margin:0; font-size: 0.8rem; color: #334155;">Correo: ${q.email}</p>` : ''}
+        <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; border-bottom: 2px solid #22c55e; padding-bottom: 0.8rem; width: 100%;">
+            <div style="flex:1;">
+                <p style="margin:0 0 5px; color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Cliente</p>
+                <h2 style="margin:0; font-size:1.1rem; color: #1e293b; line-height:1.2;">${q.customerCode ? `<span style="color:#64748b; font-weight:400;">(${q.customerCode})</span> ` : ''}${q.customerName}</h2>
+                <div style="margin-top:5px; font-size:0.85rem; color:#334155; line-height:1.5;">
+                    <p style="margin:0;"><b>RTN:</b> ${q.rtn || 'C/F'}</p>
+                    <p style="margin:0;"><b>Dirección:</b> ${q.address || 'Honduras'}</p>
+                    <p style="margin:0;"><b>Teléfono:</b> ${q.phones || 'N/A'}</p>
+                    ${q.email ? `<p style="margin:0;"><b>Correo:</b> ${q.email}</p>` : ''}
+                </div>
             </div>
-            <div style="text-align: right; line-height: 1.3; font-size: 0.8rem; min-width: 150px;">
-                <div style="display:flex; justify-content: space-between; gap: 10px;">
+            <div style="text-align: right; line-height: 1.6; font-size: 0.85rem; min-width: 180px; padding-top: 15px;">
+                <div style="display:flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #f1f5f9;">
                     <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Vendedor:</strong>
                     <span>${q.seller || 'General'}</span>
                 </div>
                 <div style="display:flex; justify-content: space-between; gap: 10px;">
                     <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Vence:</strong>
                     <span>${window.app.formatDisplayDate(q.dueDate)}</span>
+                </div>
+                <div style="display:flex; justify-content: space-between; gap: 10px;">
+                    <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Moneda:</strong>
+                    <span>${q.currency === 'USD' ? 'Dólares (USD)' : 'Lempiras (LPS)'}</span>
                 </div>
             </div>
         </div>
@@ -115,7 +122,7 @@ window.Views.preview = (q) => `
                 <div style="display:flex; align-items:center; gap: 5px;"><i data-lucide="mail" style="width:12px;"></i> ventas@chipssa.net</div>
             </div>
             <div style="text-align: center; margin-top: 5px; font-size: 0.65rem; color: #94a3b8;">
-                Cotización genera por sistema CotizadorPRO - Página 1 de 1
+                Página 1 de 1
             </div>
         </div>
     </div>
