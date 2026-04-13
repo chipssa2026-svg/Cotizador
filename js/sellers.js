@@ -22,7 +22,8 @@ window.Views.sellers = (s, query = '') => {
             </div>
             <div class="search-bar" style="width: 300px; margin: 0; position: relative;">
                 <i data-lucide="search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width:16px; color: var(--text-muted);"></i>
-                <input type="text" placeholder="Buscar vendedor..." oninput="app.render('sellers', null, this.value)" 
+                <input type="text" id="seller-search" placeholder="Buscar vendedor..." value="${query}"
+                       oninput="app.searchSellers(this.value)" 
                        style="width: 100%; padding: 10px 15px 10px 40px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main);">
             </div>
         </div>

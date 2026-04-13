@@ -1531,5 +1531,55 @@ window.app = {
                 }
             }
         }, 300);
+    },
+
+    searchInventory(val) {
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+        this.searchTimeout = setTimeout(() => {
+            const query = val.toLowerCase().trim();
+            const filtered = this.data.productos.filter(p => 
+                (p.code || '').toLowerCase().includes(query) ||
+                (p.description || '').toLowerCase().includes(query)
+            );
+
+            const area = document.getElementById('content-area');
+            if (area && window.Views.inventory) {
+                area.innerHTML = window.Views.inventory(filtered, val);
+                lucide.createIcons();
+
+                // RESTAURAR FOCO Y POSICIÓN AL FINAL
+                const input = document.getElementById('inventory-search');
+                if (input) {
+                    input.focus();
+                    input.setSelectionRange(val.length, val.length);
+                }
+            }
+        }, 300);
+    },
+
+    searchSellers(val) {
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+        this.searchTimeout = setTimeout(() => {
+            const query = val.toLowerCase().trim();
+            const filtered = this.data.vendedores.filter(v => 
+                (v.name || '').toLowerCase().includes(query) ||
+                String(v.id).toLowerCase().includes(query)
+            );
+
+            const area = document.getElementById('content-area');
+            if (area && window.Views.sellers) {
+                area.innerHTML = window.Views.sellers(this.data.vendedores, val);
+                lucide.createIcons();
+
+                // RESTAURAR FOCO Y POSICIÓN
+                const input = document.getElementById('seller-search');
+                if (input) {
+                    input.focus();
+                    input.setSelectionRange(val.length, val.length);
+                }
+            }
+        }, 300);
     }
 };
