@@ -215,9 +215,11 @@ window.app = {
             return {
                 id: q.id || get(['id']) || Date.now() + Math.random(),
                 number: String(get(['numero', 'number', 'cotizacion', 'folio']) || '').trim(),
-                customerName: String(get(['customer', 'cliente', 'razon']) || 'Cliente Desconocido').trim(),
-                rtn: get(['rtn', 'id', 'fiscal']) || '',
-                address: get(['direccion', 'address', 'ubicacion']) || '',
+                customerName: String(get(['Cliente', 'cliente', 'customer', 'razon']) || 'Cliente Desconocido').trim(),
+                customerCode: get(['CodigoCliente', 'codigocliente', 'Codigo', 'codigo', 'cliente', 'Cliente']) || '',
+                rtn: get(['RTN', 'rtn', 'id', 'fiscal']) || '',
+                address: get(['Direccion', 'direccion', 'address', 'ubicacion']) || '',
+                phones: get(['Telefono', 'telefono', 'phone', 'telefonos', 'celular']) || '',
                 date: get(['date', 'fecha']) || new Date().toISOString(),
                 dueDate: get(['due', 'vence', 'vencimiento']) || '',
                 total: parseFloat(get(['total', 'monto', 'valor', 'suma'])) || 0,
@@ -237,10 +239,10 @@ window.app = {
 
         this.data.clientes = (data.clientes || data.customers || []).map(c => {
             return {
-                id: clean(c, ['codigo', 'id', 'cliente', 'cod']),
+                id: clean(c, ['Cliente', 'cliente', 'Codigo', 'codigo', 'cod']),
                 razonSocial: getVal(c, ['razon', 'social', 'nombre']),
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
-                rtn: this.formatRTN(getVal(c, ['rtn', 'id', 'fiscal'])),
+                rtn: this.formatRTN(getVal(c, ['rtn', 'fiscal', 'id_fiscal'])),
                 address: getVal(c, ['direccion', 'address']),
                 phones: getVal(c, ['telefono', 'phone']),
                 email: getVal(c, ['correo', 'email', 'mail'])
@@ -277,6 +279,7 @@ window.app = {
                 "ID": q.id, 
                 "Numero": q.number, 
                 "Cliente": q.customerName, 
+                "CodigoCliente": q.customerCode || "", 
                 "RTN": q.rtn || "", 
                 "Vendedor": q.seller || "", 
                 "Fecha": q.date, 
@@ -290,6 +293,7 @@ window.app = {
                 "Notas": q.notes || "",
                 "Detalle": JSON.stringify(q.items || []),
                 "Direccion": q.address || "",
+                "Telefono": q.phones || "",
                 "Correo": q.email || "",
                 "Moneda": q.currency || "LPS",
                 "TasaCambio": q.exchangeRate || 1
@@ -1283,7 +1287,13 @@ window.app = {
         const isv = subtotal * 0.15;
         const total = subtotal + isv;
 
-        const clientObj = this.data.clientes.find(c => c.razonSocial === customer);
+        // Búsqueda robusta del cliente para no perder código ni teléfono
+        const customerClean = customer.trim().toLowerCase();
+        const clientObj = this.data.clientes.find(c => 
+            (c.razonSocial || '').toLowerCase().trim() === customerClean ||
+            (c.nombreComercial || '').toLowerCase().trim() === customerClean
+        );
+        
         const customerCode = clientObj ? clientObj.id : '';
         const phones = clientObj ? clientObj.phones : '';
 
@@ -1319,7 +1329,21 @@ window.app = {
 
     previewQuote(id) {
         const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
-        if (q) this.render('preview', q);
+        if (q) {
+            // Auto-recuperación: Si el código falta o es igual al RTN (error común), buscarlo en el catálogo
+            if (!q.customerCode || q.customerCode === '---' || q.customerCode === q.rtn || !q.phones || q.phones === 'N/A') {
+                const searchName = (q.customerName || '').toLowerCase().trim();
+                const client = this.data.clientes.find(c => 
+                    (c.razonSocial || '').toLowerCase().trim() === searchName ||
+                    (c.nombreComercial || '').toLowerCase().trim() === searchName
+                );
+                if (client) {
+                    q.customerCode = client.id; // Forzar el ID correcto del catálogo
+                    q.phones = q.phones || client.phones;
+                }
+            }
+            this.render('preview', q);
+        }
     },
 
     showRecallQuoteModal() {
@@ -1482,5 +1506,32 @@ window.app = {
                 }
             }
         }, 400); // 400ms de espera para sentir fluidez al escribir
+    },
+
+    searchCustomers(val) {
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+        this.searchTimeout = setTimeout(() => {
+            const query = val.toLowerCase();
+            const filtered = this.data.clientes.filter(c => 
+                (c.razonSocial || '').toLowerCase().includes(query) ||
+                (c.nombreComercial || '').toLowerCase().includes(query) ||
+                (c.rtn || '').toLowerCase().includes(query) ||
+                String(c.id).includes(query)
+            );
+
+            const area = document.getElementById('content-area');
+            if (area && window.Views.customers) {
+                area.innerHTML = window.Views.customers(filtered, val);
+                lucide.createIcons();
+
+                // RESTAURAR FOCO
+                const input = document.getElementById('customer-search');
+                if (input) {
+                    input.focus();
+                    input.setSelectionRange(val.length, val.length);
+                }
+            }
+        }, 300);
     }
 };

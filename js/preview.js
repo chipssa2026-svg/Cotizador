@@ -30,8 +30,9 @@ window.Views.preview = (q) => `
         <div style="display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; border-bottom: 2px solid #22c55e; padding-bottom: 0.8rem; width: 100%;">
             <div style="flex:1;">
                 <p style="margin:0 0 5px; color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Cliente</p>
-                <h2 style="margin:0; font-size:1.1rem; color: #1e293b; line-height:1.2;">${q.customerCode ? `<span style="color:#64748b; font-weight:400;">(${q.customerCode})</span> ` : ''}${q.customerName}</h2>
-                <div style="margin-top:5px; font-size:0.85rem; color:#334155; line-height:1.5;">
+                <h2 style="margin:0; font-size:1.15rem; color: #1e293b; line-height:1.2; font-weight:800;">${q.customerName}</h2>
+                <div style="margin-top:6px; font-size:0.85rem; color:#334155; line-height:1.5;">
+                    <p style="margin:0;"><b>Código de Cliente:</b> ${q.customerCode || '---'}</p>
                     <p style="margin:0;"><b>RTN:</b> ${q.rtn || 'C/F'}</p>
                     <p style="margin:0;"><b>Dirección:</b> ${q.address || 'Honduras'}</p>
                     <p style="margin:0;"><b>Teléfono:</b> ${q.phones || 'N/A'}</p>
