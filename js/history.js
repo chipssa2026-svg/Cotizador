@@ -15,7 +15,7 @@ window.Views.history = (q, f = {}, sellers = []) => {
             <td>${window.app.formatDisplayDate(x.date)}</td>
             <td>${window.app.formatDisplayDate(x.dueDate)}</td>
             <td><span class="badge" style="background:${status.color}">${status.label}</span></td>
-            <td class="text-right row-total">L. ${(x.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td class="text-right row-total">${x.currency === 'USD' ? '$ ' : 'L. '}${(x.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td class="text-center">
                 <div style="display:flex; gap:5px; justify-content:center;">
                     <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${x.id || ''}')">Ver</button>

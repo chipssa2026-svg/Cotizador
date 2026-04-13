@@ -18,6 +18,8 @@ window.app = {
     },
     currentView: 'dashboard',
     lastMainView: 'dashboard',
+    lastCurrency: 'LPS', // Rastro para conversiones instantáneas
+    searchTimeout: null,
 
     async init() {
         console.log("📡 App Initializing...");
@@ -221,6 +223,13 @@ window.app = {
                 total: parseFloat(get(['total', 'monto', 'valor', 'suma'])) || 0,
                 seller: get(['seller', 'vendedor', 'vende']) || 'General',
                 facturada: String(get(['facturada', 'factura', 'ok'])).toUpperCase() === 'SI',
+                paymentCondition: get(['condicion', 'pago', 'payment']) || 'Contado',
+                plazo: parseInt(get(['plazo', 'dias', 'days'])) || 0,
+                email: get(['correo', 'email', 'email_cliente']) || '',
+                currency: get(['moneda', 'currency']) || 'LPS',
+                exchangeRate: parseFloat(get(['tasa', 'rate', 'cambio'])) || 1,
+                subtotal: parseFloat(get(['subtotal', 'sub'])) || 0,
+                isv: parseFloat(get(['isv', 'impuesto'])) || 0,
                 notes: notes,
                 items: items
             };
@@ -233,7 +242,8 @@ window.app = {
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
                 rtn: getVal(c, ['rtn', 'id', 'fiscal']),
                 address: getVal(c, ['direccion', 'address']),
-                phones: getVal(c, ['telefono', 'phone'])
+                phones: getVal(c, ['telefono', 'phone']),
+                email: getVal(c, ['correo', 'email', 'mail'])
             };
         });
 
@@ -259,7 +269,8 @@ window.app = {
                 "NombreComercial": c.nombreComercial,
                 "RTN": c.rtn, 
                 "Direccion": c.address,
-                "Telefonos": c.phones
+                "Telefonos": c.phones,
+                "Correo": c.email || ""
             })),
             "sellers": this.data.vendedores.map(v => ({ "Codigo": v.id, "Nombre": v.name })),
             "quotes": this.data.cotizaciones.map(q => ({
@@ -271,10 +282,17 @@ window.app = {
                 "Fecha": q.date, 
                 "Vencimiento": q.dueDate || "", 
                 "Total": q.total, 
+                "Subtotal": q.subtotal || 0,
+                "ISV": q.isv || 0,
                 "Facturada": q.facturada ? "SI" : "NO", 
+                "Condicion": q.paymentCondition || "Contado",
+                "Plazo": q.plazo || 0,
                 "Notas": q.notes || "",
                 "Detalle": JSON.stringify(q.items || []),
-                "Direccion": q.address || ""
+                "Direccion": q.address || "",
+                "Correo": q.email || "",
+                "Moneda": q.currency || "LPS",
+                "TasaCambio": q.exchangeRate || 1
             })),
             "users": this.data.usuarios.map(u => ({
                 "Usuario": u.Usuario || u.user,
@@ -364,7 +382,8 @@ window.app = {
                     nombreComercial: get(['nombrecomercial', 'comercial', 'fantasia']),
                     rtn: get(['idtributario', 'rtn', 'fiscal', 'nrc']),
                     address: get(['direccion', 'address', 'ubicacion']),
-                    phones: get(['telefonos', 'telefono', 'phone', 'celular'])
+                    phones: get(['telefonos', 'telefono', 'phone', 'celular']),
+                    email: get(['correo', 'email', 'mail'])
                 };
             });
             this.data.lastCustomerImport = this.getAppTimestamp();
@@ -441,7 +460,8 @@ window.app = {
                     clientes: this.data.clientes, 
                     vendedores: this.data.vendedores, 
                     usuarios: this.data.usuarios,
-                    revenueValue: q.reduce((a, b) => a + (b.total || 0), 0),
+                    revenueLPS: q.filter(x => x.currency === 'LPS').reduce((a, b) => a + (b.total || 0), 0),
+                    revenueUSD: q.filter(x => x.currency === 'USD').reduce((a, b) => a + (b.total || 0), 0),
                     lastProductImport: this.data.lastProductImport,
                     lastCustomerImport: this.data.lastCustomerImport,
                     lastSellerImport: this.data.lastSellerImport
@@ -894,6 +914,8 @@ window.app = {
                 document.getElementById('quote-customer').value = customer.razonSocial;
                 document.getElementById('quote-rtn').value = customer.rtn || '';
                 document.getElementById('quote-address').value = customer.address || '';
+                const emailInput = document.getElementById('quote-email');
+                if (emailInput) emailInput.value = customer.email || '';
             }
         }
     },
@@ -901,7 +923,15 @@ window.app = {
         const p = this.data.productos.find(x => String(x.code) === i.value.split(' - ')[0]);
         if(p) { 
             const tr = i.closest('tr');
-            tr.querySelector('.price-input').value = p.price; 
+            let price = p.price;
+            const currency = document.getElementById('quote-currency') ? document.getElementById('quote-currency').value : 'LPS';
+            const rate = this.parseNum(document.getElementById('quote-exchange-rate') ? document.getElementById('quote-exchange-rate').value : 0) || 1;
+            
+            if (currency === 'USD') {
+                price = price / rate;
+            }
+            
+            tr.querySelector('.price-input').value = price.toFixed(2); 
             this.calculateTotals(); 
         }
     },
@@ -920,16 +950,19 @@ window.app = {
     },
     calculateTotals() {
         let subtotal = 0;
+        const currency = document.getElementById('quote-currency') ? document.getElementById('quote-currency').value : 'LPS';
+        const symbol = currency === 'USD' ? '$ ' : 'L. ';
+
         document.querySelectorAll('#quote-items-body tr').forEach(tr => {
             const qty = this.parseNum(tr.querySelector('.qty-input').value);
             const price = this.parseNum(tr.querySelector('.price-input').value);
             const total = qty * price; subtotal += total;
-            tr.querySelector('.row-total').innerText = "L. " + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            tr.querySelector('.row-total').innerText = symbol + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         });
         const isv = subtotal * 0.15;
-        document.getElementById('sub-total').innerText = "L. " + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        document.getElementById('isv-total').innerText = "L. " + isv.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        document.getElementById('total-val').innerText = "L. " + (subtotal + isv).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        document.getElementById('sub-total').innerText = symbol + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('isv-total').innerText = symbol + isv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('total-val').innerText = symbol + (subtotal + isv).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     },
     initCharts(quotes) {
         const ctxMonth = document.getElementById('quotesMonthChart');
@@ -939,12 +972,14 @@ window.app = {
         if (window.myChart2) window.myChart2.destroy();
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         const monthlyCount = new Array(12).fill(0);
-        const monthlyValue = new Array(12).fill(0);
+        const monthlyLPS = new Array(12).fill(0);
+        const monthlyUSD = new Array(12).fill(0);
         quotes.forEach(q => {
             const m = new Date(this.parseDate(q.date)).getMonth();
             if (m >= 0) {
                 monthlyCount[m]++;
-                monthlyValue[m] += (q.total || 0);
+                if (q.currency === 'USD') monthlyUSD[m] += (q.total || 0);
+                else monthlyLPS[m] += (q.total || 0);
             }
         });
         window.myChart1 = new Chart(ctxMonth, {
@@ -952,8 +987,9 @@ window.app = {
             data: {
                 labels: months,
                 datasets: [
-                    { label: 'Cant. Cotizaciones', data: monthlyCount, backgroundColor: 'rgba(59, 130, 246, 0.5)', yAxisID: 'y' },
-                    { label: 'Valor Total (L.)', data: monthlyValue, type: 'line', borderColor: '#22c55e', tension: 0.4, fill: false, yAxisID: 'y1' }
+                    { label: 'Cant. Cotizaciones', data: monthlyCount, backgroundColor: 'rgba(59, 130, 246, 0.5)', yAxisID: 'y', order: 2 },
+                    { label: 'Valor LPS', data: monthlyLPS, type: 'line', borderColor: '#22c55e', tension: 0.4, fill: false, yAxisID: 'y1', order: 1 },
+                    { label: 'Valor USD', data: monthlyUSD, type: 'line', borderColor: '#3b82f6', tension: 0.4, fill: false, yAxisID: 'y1', order: 1 }
                 ]
             },
             options: {
@@ -979,6 +1015,99 @@ window.app = {
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
+
+        // --- Gráfica de Vendedores ---
+        const ctxSeller = document.getElementById('sellerPerformanceChart');
+        if (ctxSeller) {
+            if (window.myChart3) window.myChart3.destroy();
+            
+            const sellerData = {};
+            quotes.forEach(q => {
+                const s = q.seller || 'General';
+                if (!sellerData[s]) sellerData[s] = { count: 0, value: 0 };
+                sellerData[s].count++;
+                
+                // Consolidar valor en LPS para comparación justa (si es USD, convertir con su tasa)
+                if (q.currency === 'USD') {
+                    sellerData[s].value += (q.total * (q.exchangeRate || 1));
+                } else {
+                    sellerData[s].value += q.total;
+                }
+            });
+
+            const labels = Object.keys(sellerData);
+            const counts = labels.map(l => sellerData[l].count);
+            const values = labels.map(l => sellerData[l].value);
+
+            window.myChart3 = new Chart(ctxSeller, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Cant. Cotizaciones', data: counts, backgroundColor: 'rgba(59, 130, 246, 0.6)', yAxisID: 'y' },
+                        { label: 'Valor Consolidado (LPS)', data: values, backgroundColor: 'rgba(34, 197, 94, 0.6)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Cantidad' } },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Monto Total (LPS)' } }
+                    }
+                }
+            });
+        }
+
+        // --- Gráfica de Productos (Top 10) ---
+        const ctxProd = document.getElementById('productPerformanceChart');
+        if (ctxProd) {
+            if (window.myChart4) window.myChart4.destroy();
+            
+            const productData = {};
+            quotes.forEach(q => {
+                const items = q.items || [];
+                items.forEach(item => {
+                    const desc = item.description || item.code || 'Desconocido';
+                    if (!productData[desc]) productData[desc] = { qty: 0, value: 0 };
+                    productData[desc].qty += (item.qty || 0);
+                    
+                    // Valor proporcional del item en LPS
+                    let itemVal = (item.qty * item.price);
+                    if (q.currency === 'USD') itemVal *= (q.exchangeRate || 1);
+                    productData[desc].value += itemVal;
+                });
+            });
+
+            // Ordenar por valor y tomar los 10 mejores
+            const topProducts = Object.entries(productData)
+                .sort((a, b) => b[1].value - a[1].value)
+                .slice(0, 10);
+
+            const labels = topProducts.map(x => x[0].length > 30 ? x[0].substring(0, 27) + '...' : x[0]);
+            const qtys = topProducts.map(x => x[1].qty);
+            const values = topProducts.map(x => x[1].value);
+
+            window.myChart4 = new Chart(ctxProd, {
+                type: 'bar', // Horizontal se activa con indexAxis
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Unidades Cotizadas', data: qtys, backgroundColor: 'rgba(245, 158, 11, 0.6)', xAxisID: 'x' },
+                        { label: 'Valor Total (LPS)', data: values, backgroundColor: 'rgba(16, 185, 129, 0.6)', xAxisID: 'x1' }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', // Barra horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'linear', position: 'top', title: { display: true, text: 'Unidades' } },
+                        x1: { type: 'linear', position: 'bottom', grid: { drawOnChartArea: false }, title: { display: true, text: 'Monto Consolidado (LPS)' } }
+                    }
+                }
+            });
+        }
     },
 
     toggleFacturado(id) {
@@ -991,15 +1120,137 @@ window.app = {
         }
     },
 
+    togglePlazoField(val) {
+        const container = document.getElementById('plazo-container');
+        if (container) {
+            container.style.display = val === 'Credito' ? 'block' : 'none';
+        }
+    },
+
+    toggleCurrencyField(val) {
+        const container = document.getElementById('exchange-rate-container');
+        if (container) {
+            container.style.display = val === 'USD' ? 'block' : 'none';
+        }
+
+        // Si regresamos a Lempiras, forzamos el precio de base de datos
+        if (val === 'LPS') {
+            document.querySelectorAll('#quote-items-body tr').forEach(tr => {
+                const prodInput = tr.querySelector('.prod-input');
+                const priceInput = tr.querySelector('.price-input');
+                const code = prodInput.value.split(' - ')[0];
+                const p = this.data.productos.find(x => String(x.code) === String(code));
+                if (p) priceInput.value = p.price.toFixed(2);
+            });
+            this.lastCurrency = 'LPS';
+            this.calculateTotals();
+        } else {
+            // Si pasamos a USD, intentamos recuperar la última tasa utilizada en el historial
+            const rateInput = document.getElementById('quote-exchange-rate');
+            if (rateInput && (!rateInput.value || rateInput.value === "1")) {
+                const lastUSDQuote = [...this.data.cotizaciones].reverse().find(q => q.currency === 'USD' && q.exchangeRate > 1);
+                if (lastUSDQuote) {
+                    rateInput.value = lastUSDQuote.exchangeRate;
+                } else {
+                    rateInput.value = ""; // Limpiar si no hay historial para obligar ingreso
+                }
+            }
+            this.updatePricesByRate();
+            this.lastCurrency = 'USD';
+        }
+    },
+
+    updatePricesByRate() {
+        const rate = this.parseNum(document.getElementById('quote-exchange-rate').value);
+        const currency = document.getElementById('quote-currency').value;
+        
+        if (currency === 'USD') {
+            document.querySelectorAll('#quote-items-body tr').forEach(tr => {
+                const prodInput = tr.querySelector('.prod-input');
+                const priceInput = tr.querySelector('.price-input');
+                const code = prodInput.value.split(' - ')[0];
+                const p = this.data.productos.find(x => String(x.code) === String(code));
+                if (p) {
+                    if (rate > 0) {
+                        priceInput.value = (p.price / rate).toFixed(2);
+                    } else {
+                        priceInput.value = "0.00";
+                    }
+                }
+            });
+        }
+        this.calculateTotals();
+    },
+
+    numberToWords(num, currency = 'LPS') {
+        if (!num || num === 0) return `CERO ${currency === 'USD' ? 'DÓLARES' : 'LEMPIRAS'} CON 00/100`;
+        
+        const units = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+        const tens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+        const tens2 = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+        const hundreds = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+        const convertGroup = (n) => {
+            let output = '';
+            if (n === 100) return 'CIEN ';
+            if (n > 100) {
+                output += hundreds[Math.floor(n / 100)] + ' ';
+                n %= 100;
+            }
+            if (n >= 20) {
+                let d = Math.floor(n / 10);
+                let u = n % 10;
+                if (d === 2 && u > 0) output += 'VEINTI' + units[u];
+                else {
+                    output += tens2[d];
+                    if (u > 0) output += ' Y ' + units[u];
+                }
+            } else if (n >= 10) {
+                output += tens[n - 10];
+            } else if (n > 0) {
+                output += units[n];
+            }
+            return output + ' ';
+        };
+
+        let intPart = Math.floor(num);
+        let decPart = Math.round((num - intPart) * 100);
+        let result = '';
+
+        if (intPart >= 1000000) {
+            let millions = Math.floor(intPart / 1000000);
+            result += (millions === 1 ? 'UN MILLON ' : convertGroup(millions) + 'MILLONES ');
+            intPart %= 1000000;
+        }
+        if (intPart >= 1000) {
+            let thousands = Math.floor(intPart / 1000);
+            result += (thousands === 1 ? 'MIL ' : convertGroup(thousands) + 'MIL ');
+            intPart %= 1000;
+        }
+        if (intPart > 0 || result === '') {
+            result += convertGroup(intPart);
+        }
+
+        const label = currency === 'USD' ? 'DÓLARES' : 'LEMPIRAS';
+        return `SON: ${result.trim()} ${label} CON ${decPart.toString().padStart(2, '0')}/100`;
+    },
+
     saveFinalQuote() {
         const customer = document.getElementById('quote-customer').value;
         const rtn = document.getElementById('quote-rtn').value;
         const address = document.getElementById('quote-address').value;
+        const email = document.getElementById('quote-email').value;
         const seller = document.getElementById('quote-vendedor').value;
         const dueDate = document.getElementById('quote-due-date').value;
+        const paymentCondition = document.getElementById('quote-payment-condition').value;
+        const currency = document.getElementById('quote-currency').value;
+        const exchangeRate = currency === 'LPS' ? 1 : (parseFloat(document.getElementById('quote-exchange-rate').value) || 1);
+        const plazo = parseInt(document.getElementById('quote-plazo').value) || 0;
         const notes = document.getElementById('quote-notes').value;
 
         if (!customer) return this.notify('Seleccione un cliente', 'error');
+        if (!seller) return this.notify('Seleccione un vendedor', 'error');
+        if (currency === 'USD' && exchangeRate <= 0) return this.notify('Ingrese una tasa de cambio válida para dólares', 'error');
 
         const items = [];
         document.querySelectorAll('#quote-items-body tr').forEach(tr => {
@@ -1020,7 +1271,8 @@ window.app = {
         if (items.length === 0) return this.notify('Agregue al menos un producto', 'error');
 
         const subtotal = items.reduce((a, b) => a + b.total, 0);
-        const total = subtotal * 1.15;
+        const isv = subtotal * 0.15;
+        const total = subtotal + isv;
 
         const q = {
             id: Date.now(),
@@ -1028,12 +1280,19 @@ window.app = {
             customerName: customer,
             rtn,
             address,
+            email,
             seller,
             date: this.getLocalDate(),
             dueDate,
             items,
-            total,
+            total: parseFloat(total.toFixed(2)),
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            isv: parseFloat(isv.toFixed(2)),
             notes,
+            paymentCondition,
+            plazo,
+            currency,
+            exchangeRate,
             facturada: false
         };
 
@@ -1098,7 +1357,25 @@ window.app = {
         document.getElementById('quote-customer').value = quote.customerName || '';
         document.getElementById('quote-rtn').value = quote.rtn || '';
         document.getElementById('quote-address').value = quote.address || '';
+        const emailField = document.getElementById('quote-email');
+        if (emailField) emailField.value = quote.email || '';
         document.getElementById('quote-notes').value = quote.notes || '';
+        
+        const currSelect = document.getElementById('quote-currency');
+        if (currSelect) {
+            currSelect.value = quote.currency || 'LPS';
+            this.toggleCurrencyField(currSelect.value);
+        }
+        const rateInput = document.getElementById('quote-exchange-rate');
+        if (rateInput) rateInput.value = quote.exchangeRate || '';
+        
+        const condSelect = document.getElementById('quote-payment-condition');
+        if (condSelect) {
+            condSelect.value = quote.paymentCondition || 'Contado';
+            this.togglePlazoField(condSelect.value);
+        }
+        const plazoInput = document.getElementById('quote-plazo');
+        if (plazoInput) plazoInput.value = quote.plazo || 0;
         
         // El vendedor solo se puebla si no está deshabilitado (rol Vendedor)
         const vInput = document.getElementById('quote-vendedor');
@@ -1116,5 +1393,79 @@ window.app = {
 
         this.calculateTotals();
         this.notify('Datos importados correctamente');
+    },
+
+    filterDashboard(query, status, seller, from, to) {
+        // Limpiar el timeout anterior para evitar renders excesivos mientras se escribe
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+        this.searchTimeout = setTimeout(() => {
+            let q = [...this.data.cotizaciones];
+            
+            // Filtro por rol (Seguridad)
+            const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
+            if (role === 'VENDEDOR') {
+                const sellerCode = this.data.currentUser.CodigoVendedor || this.data.currentUser.sellerCode;
+                const sellerObj = this.data.vendedores.find(v => String(v.id) === String(sellerCode));
+                if (sellerObj) q = q.filter(x => x.seller === sellerObj.name);
+            }
+
+            // Filtro por Vendedor (Selector)
+            if (seller) q = q.filter(x => x.seller === seller);
+
+            // Filtro por Estado
+            if (status) {
+                q = q.filter(x => {
+                    const s = this.getStatus(x).label;
+                    return s === status;
+                });
+            }
+
+            // Filtro por Rango de Fechas
+            if (from || to) {
+                q = q.filter(x => {
+                    const qDate = x.date; // Formato YYYY-MM-DD
+                    if (from && qDate < from) return false;
+                    if (to && qDate > to) return false;
+                    return true;
+                });
+            }
+
+            // Filtro por Texto (Nombre o Numero)
+            if (query) {
+                const low = query.toLowerCase();
+                q = q.filter(x => 
+                    String(x.number).includes(low) || 
+                    (x.customerName || '').toLowerCase().includes(low)
+                );
+            }
+
+            const dataForView = {
+                filteredQuotes: q,
+                recentQuotes: q.slice(0, 10),
+                productos: this.data.productos,
+                clientes: this.data.clientes,
+                vendedores: this.data.vendedores,
+                revenueLPS: q.filter(x => x.currency === 'LPS').reduce((a, b) => a + (b.total || 0), 0),
+                revenueUSD: q.filter(x => x.currency === 'USD').reduce((a, b) => a + (b.total || 0), 0),
+                lastProductImport: this.data.lastProductImport,
+                lastCustomerImport: this.data.lastCustomerImport,
+                lastSellerImport: this.data.lastSellerImport,
+                activeFilters: { query, status, seller, from, to }
+            };
+
+            const area = document.getElementById('content-area');
+            if (area && window.Views.dashboard) {
+                area.innerHTML = window.Views.dashboard(dataForView);
+                this.initCharts(q);
+                
+                // RESTAURAR FOCO Y POSICIÓN DEL CURSOR
+                const searchInput = document.getElementById('dash-filter-q');
+                if (searchInput && query) {
+                    searchInput.focus();
+                    searchInput.setSelectionRange(query.length, query.length);
+                }
+            }
+        }, 400); // 400ms de espera para sentir fluidez al escribir
     }
 };

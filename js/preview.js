@@ -33,6 +33,7 @@ window.Views.preview = (q) => `
                 <p style="margin:0; font-size: 1.1rem; font-weight: 700; color: #1e293b;">${q.customerName}</p>
                 <p style="margin:0; font-size: 0.8rem; color: #334155;">${q.address || ''}</p>
                 <p style="margin:0; font-size: 0.8rem; color: #334155;">RTN: ${q.rtn || 'N/A'}</p>
+                ${q.email ? `<p style="margin:0; font-size: 0.8rem; color: #334155;">Correo: ${q.email}</p>` : ''}
             </div>
             <div style="text-align: right; line-height: 1.3; font-size: 0.8rem; min-width: 150px;">
                 <div style="display:flex; justify-content: space-between; gap: 10px;">
@@ -66,8 +67,8 @@ window.Views.preview = (q) => `
                         <td style="padding: 6px 8px; font-weight: 500;">${i.code || ''}</td>
                         <td style="padding: 6px 8px;">${i.description || 'Sin descripción'}</td>
                         <td style="padding: 6px 8px; text-align:right;">${qty.toFixed(2)}</td>
-                        <td style="padding: 6px 8px; text-align:right;">L. ${price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                        <td style="padding: 6px 8px; text-align:right; font-weight: 700; white-space: nowrap;">L. ${rowTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                        <td style="padding: 6px 8px; text-align:right;">${q.currency === 'USD' ? '$ ' : 'L. '}${price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                        <td style="padding: 6px 8px; text-align:right; font-weight: 700; white-space: nowrap;">${q.currency === 'USD' ? '$ ' : 'L. '}${rowTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     </tr>`;
                 }).join('')}
             </tbody>
@@ -83,7 +84,7 @@ window.Views.preview = (q) => `
                 ` : '<div style="height: 5px;"></div>'}
                 
                 <div>
-                    <p style="font-size: 0.8rem; color: #1e293b; margin: 0;"><strong>Condición:</strong> Contado / 30 días</p>
+                    <p style="font-size: 0.8rem; color: #1e293b; margin: 0;"><strong>Condición:</strong> ${q.paymentCondition === 'Credito' ? 'Crédito ' + (q.plazo || 0) + ' días' : 'Contado'}</p>
                     <p style="font-size: 0.7rem; color: #64748b; margin-top: 3px;">Precios sujetos a cambio sin previo aviso.</p>
                 </div>
             </div>
@@ -91,22 +92,25 @@ window.Views.preview = (q) => `
             <div style="width: 250px;">
                 <div style="display:flex; justify-content:space-between; padding: 4px 0; font-size: 0.85rem; color: #475569;">
                     <span>Subtotal</span>
-                    <span>L. ${(Number(q.total || 0) / 1.15).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${(Number(q.total || 0) / 1.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding: 4px 0; font-size: 0.85rem; color: #475569;">
                     <span>ISV 15%</span>
-                    <span>L. ${(Number(q.total || 0) - (Number(q.total || 0) / 1.15)).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${(Number(q.total || 0) - (Number(q.total || 0) / 1.15)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding: 8px 0; border-top: 2px solid #22c55e; margin-top: 3px; font-size: 1.1rem;">
                     <strong style="color: #1e293b;">TOTAL</strong>
-                    <strong style="color: #22c55e;">L. ${Number(q.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
+                    <strong style="color: #22c55e;">${q.currency === 'USD' ? '$ ' : 'L. '}${Number(q.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.75rem; color: #475569; font-weight: 600; text-align: right; text-transform: uppercase;">
+                    ${window.app.numberToWords(q.total, q.currency)}
                 </div>
             </div>
         </div>
 
         <div style="border-top: 1px solid #e2e8f0; padding-top: 0.8rem; margin-top: auto; margin-bottom: 0px; width: 100%;">
             <div style="display:flex; justify-content:center; gap: 30px; font-size: 0.7rem; color: #64748b; font-weight: 500;">
-                <div style="display:flex; align-items:center; gap: 5px;"><i data-lucide="phone" style="width:12px;"></i> PBX: (504) 2556-9781</div>
+                <div style="display:flex; align-items:center; gap: 5px;"><i data-lucide="phone" style="width:12px;"></i> PBX: (504) 2544-0212</div>
                 <div style="display:flex; align-items:center; gap: 5px;"><i data-lucide="globe" style="width:12px;"></i> www.chipssa.net</div>
                 <div style="display:flex; align-items:center; gap: 5px;"><i data-lucide="mail" style="width:12px;"></i> ventas@chipssa.net</div>
             </div>

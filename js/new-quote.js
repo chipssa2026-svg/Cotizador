@@ -46,11 +46,41 @@ window.Views['new-quote'] = (d) => {
                 <div class="mb-3"><label>Cliente</label><input type="text" id="quote-customer" placeholder="Nombre del cliente..." list="customers-datalist" onchange="app.onCustomerSelect(this)"></div>
                 <div class="mb-3"><label>RTN / ID</label><input type="text" id="quote-rtn" placeholder="RTN del cliente..."></div>
                 <div class="mb-3"><label>Dirección</label><input type="text" id="quote-address" placeholder="Dirección del cliente..."></div>
+                <div class="mb-3"><label>Correo Electrónico</label><input type="email" id="quote-email" placeholder="correo@ejemplo.com"></div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <div><label>Vencimiento</label><input type="date" id="quote-due-date" value="${window.app.getLocalDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))}"></div>
                     <div><label>Vendedor</label><input type="text" id="quote-vendedor" placeholder="Nombre..." list="sellers-datalist"></div>
                 </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mt-3">
+                    <div>
+                        <label>Condición de Pago</label>
+                        <select id="quote-payment-condition" onchange="app.togglePlazoField(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
+                            <option value="Contado">Contado</option>
+                            <option value="Credito">Crédito</option>
+                        </select>
+                    </div>
+                    <div id="plazo-container" style="display:none;">
+                        <label>Plazo (días)</label>
+                        <input type="number" id="quote-plazo" placeholder="0" min="0" value="0">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mt-3">
+                    <div>
+                        <label>Moneda</label>
+                        <select id="quote-currency" onchange="app.toggleCurrencyField(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
+                            <option value="LPS">Lempiras (L.)</option>
+                            <option value="USD">Dólares ($)</option>
+                        </select>
+                    </div>
+                    <div id="exchange-rate-container" style="display:none;">
+                        <label>Tasa de Cambio</label>
+                        <input type="number" id="quote-exchange-rate" placeholder="0.00" min="0" step="0.01" value="" oninput="app.updatePricesByRate()">
+                    </div>
+                </div>
+
                 <div class="mt-3">
                     <label style="color:var(--text-main);">Observaciones</label>
                     <textarea id="quote-notes" placeholder="Notas o términos adicionales..." style="width:100%; height:80px; border-radius:8px; padding:10px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit; resize:none;"></textarea>
