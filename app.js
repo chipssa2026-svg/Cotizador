@@ -216,7 +216,7 @@ window.app = {
                 id: q.id || get(['id']) || Date.now() + Math.random(),
                 number: String(get(['numero', 'number', 'cotizacion', 'folio']) || '').trim(),
                 customerName: String(get(['Cliente', 'cliente', 'customer', 'razon']) || 'Cliente Desconocido').trim(),
-                customerCode: get(['CodigoCliente', 'codigocliente', 'Codigo', 'codigo', 'cliente', 'Cliente']) || '',
+                customerCode: get(['CodigoCliente', 'codigocliente', 'Codigo', 'codigo', 'IdCliente']) || '',
                 rtn: get(['RTN', 'rtn', 'id', 'fiscal']) || '',
                 address: get(['Direccion', 'direccion', 'address', 'ubicacion']) || '',
                 phones: get(['Telefono', 'telefono', 'phone', 'telefonos', 'celular']) || '',
@@ -239,7 +239,7 @@ window.app = {
 
         this.data.clientes = (data.clientes || data.customers || []).map(c => {
             return {
-                id: clean(c, ['Cliente', 'cliente', 'Codigo', 'codigo', 'cod']),
+                id: clean(c, ['Cliente', 'cliente', 'Codigo', 'codigo']), // Prioridad absoluta al campo cliente de tu hoja
                 razonSocial: getVal(c, ['razon', 'social', 'nombre']),
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
                 rtn: this.formatRTN(getVal(c, ['rtn', 'fiscal', 'id_fiscal'])),
@@ -1329,21 +1329,7 @@ window.app = {
 
     previewQuote(id) {
         const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
-        if (q) {
-            // Auto-recuperación: Si el código falta o es igual al RTN (error común), buscarlo en el catálogo
-            if (!q.customerCode || q.customerCode === '---' || q.customerCode === q.rtn || !q.phones || q.phones === 'N/A') {
-                const searchName = (q.customerName || '').toLowerCase().trim();
-                const client = this.data.clientes.find(c => 
-                    (c.razonSocial || '').toLowerCase().trim() === searchName ||
-                    (c.nombreComercial || '').toLowerCase().trim() === searchName
-                );
-                if (client) {
-                    q.customerCode = client.id; // Forzar el ID correcto del catálogo
-                    q.phones = q.phones || client.phones;
-                }
-            }
-            this.render('preview', q);
-        }
+        if (q) this.render('preview', q);
     },
 
     showRecallQuoteModal() {
