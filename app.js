@@ -180,8 +180,8 @@ window.app = {
         this.data.cotizaciones = (data.cotizaciones || data.quotes || []).map(q => {
             const keys = Object.keys(q);
             const get = (words) => {
-                const k = keys.find(key => words.some(w => key.toLowerCase().includes(w)));
-                return k ? q[k] : null;
+                const k = keys.find(key => words.some(w => key.toLowerCase().includes(w.toLowerCase())));
+                return k ? q[k] : '';
             };
             
             // Recuperar detalle (Sistema de Doble Seguridad: Columna or Piggybacking)
@@ -225,6 +225,10 @@ window.app = {
                 total: parseFloat(get(['total', 'monto', 'valor', 'suma'])) || 0,
                 seller: get(['seller', 'vendedor', 'vende']) || 'General',
                 facturada: String(get(['facturada', 'factura', 'ok'])).toUpperCase() === 'SI',
+                anulada: String(get(['Anulada', 'anulada'])).toUpperCase() === 'SI',
+                anuladaMotivo: get(['AnuladaMotivo', 'anulada_motivo', 'motivo_anula']) || '',
+                anuladaPor: get(['AnuladaPor', 'anulada_por', 'usuario_anula']) || '',
+                anuladaFecha: get(['AnuladaFecha', 'anulada_fecha', 'fecha_anula']) || '',
                 paymentCondition: get(['condicion', 'pago', 'payment']) || 'Contado',
                 plazo: parseInt(get(['plazo', 'dias', 'days'])) || 0,
                 email: get(['correo', 'email', 'email_cliente']) || '',
@@ -299,7 +303,10 @@ window.app = {
                 "Total": q.total, 
                 "Subtotal": q.subtotal || 0,
                 "ISV": q.isv || 0,
-                "Facturada": q.facturada ? "SI" : "NO", 
+                "Anulada": q.anulada ? "SI" : "NO",
+                "AnuladaMotivo": q.anuladaMotivo || "",
+                "AnuladaPor": q.anuladaPor || "",
+                "AnuladaFecha": q.anuladaFecha || "",
                 "Condicion": q.paymentCondition || "Contado",
                 "Plazo": q.plazo || 0,
                 "Notas": q.notes || "",
@@ -877,6 +884,7 @@ window.app = {
     },
     parseDate(s) { return s ? new Date(s.split('T')[0]).getTime() : 0; },
     getStatus(q) { 
+        if (q.anulada) return { label: 'Anulada', color: '#94a3b8' }; // Gris para anuladas
         if (q.facturada) return { label: 'Facturada', color: '#3b82f6' };
         if (!q.dueDate) return { label: 'Activa', color: '#22c55e' };
         
@@ -1034,7 +1042,7 @@ window.app = {
                 }
             }
         });
-        const statusData = { 'Activa': 0, 'Facturada': 0, 'Vencida': 0, 'Por vencer': 0 };
+        const statusData = { 'Activa': 0, 'Facturada': 0, 'Vencida': 0, 'Por vencer': 0, 'Anulada': 0 };
         quotes.forEach(q => { const s = this.getStatus(q).label; if(statusData.hasOwnProperty(s)) statusData[s] += (q.total || 0); });
 
         window.myChart2 = new Chart(ctxStatus, {
@@ -1043,7 +1051,7 @@ window.app = {
                 labels: Object.keys(statusData), 
                 datasets: [{ 
                     data: Object.values(statusData), 
-                    backgroundColor: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b'] 
+                    backgroundColor: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b', '#94a3b8'] 
                 }] 
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
@@ -1146,11 +1154,60 @@ window.app = {
     toggleFacturado(id) {
         const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
         if (q) {
+            if (q.anulada) return this.notify('No se puede marcar como facturada una cotización anulada', 'error');
             q.facturada = !q.facturada;
             this.saveDB();
             this.render(this.currentView);
             this.notify(`Cotización #${q.number} marcada como ${q.facturada ? 'Facturada' : 'Pendiente'}`);
         }
+    },
+
+    toggleAnular(id) {
+        const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
+        if (!q || q.anulada) return;
+
+        // Caso: Anular con Auditoría
+        const modal = document.getElementById('modal-container');
+            modal.innerHTML = `
+                <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:35px; border-radius:24px; width:450px; border: 1px solid var(--border-color);">
+                    <div style="width:60px; height:60px; background:rgba(239, 68, 68, 0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                        <i data-lucide="alert-triangle" style="width:30px; height:30px;"></i>
+                    </div>
+                    <h3 style="margin-bottom:10px; color:var(--text-main);">Anular Cotización #${q.number}</h3>
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Por seguridad, ingresa el motivo de la anulación:</p>
+                    
+                    <textarea id="void-reason" placeholder="Ej: Error en precios, cliente desistió, etc..." 
+                        style="width:100%; height:100px; padding:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); margin-bottom:20px; font-family:inherit; resize:none;"></textarea>
+                    
+                    <div style="display:flex; gap:10px; justify-content:center;">
+                        <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
+                        <button class="btn btn-primary" style="background:#ef4444; border:none;" id="btn-confirm-void">Confirmar Anulación</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+            
+            document.getElementById('void-reason').focus();
+            
+            document.getElementById('btn-confirm-void').onclick = () => {
+                const reason = document.getElementById('void-reason').value.trim();
+                if (reason.length < 5) {
+                    return this.notify('Por favor, ingresa un motivo más detallado', 'error');
+                }
+                
+                // Registro de Auditoría
+                q.anulada = true;
+                q.facturada = false;
+                q.anuladaMotivo = reason;
+                q.anuladaPor = this.data.currentUser.Nombre || this.data.currentUser.name;
+                q.anuladaFecha = this.getAppTimestamp();
+                
+                this.saveDB();
+                document.getElementById('modal-container').classList.add('hidden');
+                this.render(this.currentView);
+                this.notify(`Cotización #${q.number} ANULADA con éxito`);
+            };
     },
 
     togglePlazoField(val) {
@@ -1676,5 +1733,51 @@ window.app = {
             this.notify(`¡${this.data.vendedores.length} vendedores registrados!`);
         };
         reader.readAsArrayBuffer(file);
+    },
+
+    filterHistory(query, status, seller, from, to) {
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+        this.searchTimeout = setTimeout(() => {
+            let q = [...this.data.cotizaciones];
+
+            if (query) {
+                const low = query.toLowerCase();
+                q = q.filter(x => 
+                    String(x.number).includes(low) || 
+                    (x.customerName || '').toLowerCase().includes(low)
+                );
+            }
+
+            if (status) {
+                q = q.filter(x => this.getStatus(x).label === status);
+            }
+
+            if (seller) {
+                q = q.filter(x => x.seller === seller);
+            }
+
+            if (from || to) {
+                q = q.filter(x => {
+                    const qDate = x.date; 
+                    if (from && qDate < from) return false;
+                    if (to && qDate > to) return false;
+                    return true;
+                });
+            }
+
+            const area = document.getElementById('content-area');
+            if (area && window.Views.history) {
+                const filters = { query, status, seller, start: from, end: to };
+                area.innerHTML = window.Views.history(q, filters, this.data.vendedores);
+                lucide.createIcons();
+
+                const input = document.getElementById('hist-filter-q');
+                if (input && query) {
+                    input.focus();
+                    input.setSelectionRange(query.length, query.length);
+                }
+            }
+        }, 300);
     }
 };

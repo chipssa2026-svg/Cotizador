@@ -24,8 +24,14 @@ window.Views.dashboard = (d) => {
             <td class="text-right row-total">${q.currency === 'USD' ? '$ ' : 'L. '}${q.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td class="text-center">
                 <div style="display:flex; gap:5px; justify-content:center;">
-                    <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${q.id}')">Ver</button>
-                    <button class="btn btn-sm ${q.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${q.id}')" title="Marcar como Facturada"><i data-lucide="${q.facturada ? 'check-square' : 'file-check'}"></i></button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${q.id}')" title="Ver/Imprimir">Ver</button>
+                    ${!q.anulada ? `
+                    <button class="btn btn-sm ${q.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${q.id}')" title="Marcar como Facturada">
+                        <i data-lucide="${q.facturada ? 'check-square' : 'file-check'}"></i>
+                    </button>
+                    <button class="btn btn-sm" style="background:#ef4444; color:white;" onclick="window.app.toggleAnular('${q.id}')" title="Anular">
+                        <i data-lucide="ban"></i>
+                    </button>` : ''}
                 </div>
             </td>
         </tr>`}).join('');
@@ -43,6 +49,7 @@ window.Views.dashboard = (d) => {
                 <option value="">Estado: Todos</option>
                 <option value="Activa" ${f.status === 'Activa' ? 'selected' : ''}>Activa</option>
                 <option value="Facturada" ${f.status === 'Facturada' ? 'selected' : ''}>Facturada</option>
+                <option value="Anulada" ${f.status === 'Anulada' ? 'selected' : ''}>Anulada</option>
                 <option value="Vencida" ${f.status === 'Vencida' ? 'selected' : ''}>Vencida</option>
                 <option value="Por vencer" ${f.status === 'Por vencer' ? 'selected' : ''}>Por vencer</option>
             </select>

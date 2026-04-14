@@ -11,6 +11,20 @@ window.Views.preview = (q) => `
     </div>
     <div class="print-area card glass" style="width: 100%; margin: auto; background: white !important; color: black !important; font-family: 'Inter', sans-serif; position: relative; box-sizing: border-box;">
         
+        ${q.anulada ? `
+        <div style="background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; font-weight: 700; font-size: 1rem;">
+            <div style="text-transform: uppercase; font-size: 1.2rem; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:5px;">
+                <i data-lucide="info" style="width:24px; height:24px;"></i> COTIZACIÓN ANULADA
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 500;">
+                Anulada por: <span style="font-weight: 800;">${q.anuladaPor || 'Sistema'}</span> el <span style="font-weight: 800;">${window.app.formatFullDate(q.anuladaFecha)}</span>
+            </div>
+            <div style="margin-top: 5px; font-style: italic; font-size: 0.85rem; background: rgba(255,255,255,0.5); padding: 5px; border-radius: 6px;">
+                Motivo: "${q.anuladaMotivo || 'No especificado'}"
+            </div>
+        </div>
+        ` : ''}
+
         <div style="display:flex; align-items:flex-start; justify-content: space-between; margin-bottom: 0.8rem; margin-top: -0.5rem; width: 100%;">
             <div style="display:flex; align-items:center; gap: 1.5rem;">
                 <img src="Logo.png" style="width: 110px; height: auto;" alt="Logo Chips" onerror="this.src='https://placehold.co/110x45?text=Chips+S.A.'">

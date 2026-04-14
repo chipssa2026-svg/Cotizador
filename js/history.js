@@ -18,10 +18,14 @@ window.Views.history = (q, f = {}, sellers = []) => {
             <td class="text-right row-total">${x.currency === 'USD' ? '$ ' : 'L. '}${(x.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td class="text-center">
                 <div style="display:flex; gap:5px; justify-content:center;">
-                    <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${x.id || ''}')">Ver</button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${x.id || ''}')" title="Ver/Imprimir">Ver</button>
+                    ${!x.anulada ? `
                     ${['ADMINISTRADOR', 'GERENCIA', 'ASISTENTE DE GERENCIA', 'FACTURACION'].includes((window.app.data.currentUser.Rol || '').toUpperCase()) ? `
-                    <button class="btn btn-sm ${x.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${x.getSyncId ? x.getSyncId() : x.id}')" title="Marcar como Facturada">
+                    <button class="btn btn-sm ${x.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${x.id}')" title="Marcar como Facturada">
                         <i data-lucide="${x.facturada ? 'check-square' : 'file-check'}" style="width:14px;"></i>
+                    </button>` : ''}
+                    <button class="btn btn-sm" style="background:#ef4444; color:white;" onclick="window.app.toggleAnular('${x.id}')" title="Anular">
+                        <i data-lucide="ban" style="width:14px;"></i>
                     </button>` : ''}
                 </div>
             </td>
@@ -45,6 +49,7 @@ window.Views.history = (q, f = {}, sellers = []) => {
                     <option value="">Todos</option>
                     <option value="Activa" ${f.status === 'Activa' ? 'selected' : ''}>Activa</option>
                     <option value="Facturada" ${f.status === 'Facturada' ? 'selected' : ''}>Facturada</option>
+                    <option value="Anulada" ${f.status === 'Anulada' ? 'selected' : ''}>Anulada</option>
                     <option value="Vencida" ${f.status === 'Vencida' ? 'selected' : ''}>Vencida</option>
                     <option value="Por vencer" ${f.status === 'Por vencer' ? 'selected' : ''}>Por vencer</option>
                 </select>
