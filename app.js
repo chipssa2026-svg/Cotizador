@@ -1735,6 +1735,73 @@ window.app = {
         reader.readAsArrayBuffer(file);
     },
 
+    exportHistoryToExcel() {
+        const query = document.getElementById('hist-filter-q').value;
+        const status = document.getElementById('hist-filter-status').value;
+        const seller = document.getElementById('hist-filter-seller').value;
+        const from = document.getElementById('hist-filter-start').value;
+        const to = document.getElementById('hist-filter-end').value;
+
+        let q = [...this.data.cotizaciones];
+
+        if (query) {
+            const low = query.toLowerCase();
+            q = q.filter(x => 
+                String(x.number).includes(low) || 
+                (x.customerName || '').toLowerCase().includes(low)
+            );
+        }
+        if (status) {
+            q = q.filter(x => this.getStatus(x).label === status);
+        }
+        if (seller) {
+            q = q.filter(x => x.seller === seller);
+        }
+        if (from || to) {
+            q = q.filter(x => {
+                const qDate = x.date; 
+                if (from && qDate < from) return false;
+                if (to && qDate > to) return false;
+                return true;
+            });
+        }
+
+        if (q.length === 0) return this.notify('No hay datos para exportar', 'error');
+
+        // Formatear datos para el Excel
+        const exportData = q.map(x => {
+            const s = this.getStatus(x);
+            return {
+                "No. Cotización": x.number,
+                "Cliente": x.customerName,
+                "RTN": x.rtn || 'C/F',
+                "Vendedor": x.seller || 'General',
+                "Fecha": this.formatDisplayDate(x.date),
+                "Vencimiento": this.formatDisplayDate(x.dueDate),
+                "Estado": s.label,
+                "Moneda": x.currency || 'LPS',
+                "Tasa": x.exchangeRate || 1,
+                "Subtotal": x.subtotal || 0,
+                "ISV": x.isv || 0,
+                "Total": x.total || 0,
+                "Facturada": x.facturada ? 'SI' : 'NO',
+                "Anulada": x.anulada ? 'SI' : 'NO',
+                "Motivo Anulación": x.anuladaMotivo || '',
+                "Notas": x.notes || ''
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Historial");
+
+        // Generar nombre de archivo
+        const d = new Date();
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        XLSX.writeFile(workbook, `Historial_Cotizaciones_${dateStr}.xlsx`);
+        this.notify('Excel generado correctamente');
+    },
+
     filterHistory(query, status, seller, from, to) {
         if (this.searchTimeout) clearTimeout(this.searchTimeout);
 
