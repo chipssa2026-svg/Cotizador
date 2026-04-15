@@ -4,11 +4,11 @@
  */
 
 window.app = {
-    data: { 
-        productos: [], 
-        cotizaciones: [], 
-        clientes: [], 
-        vendedores: [], 
+    data: {
+        productos: [],
+        cotizaciones: [],
+        clientes: [],
+        vendedores: [],
         usuarios: [],
         config: { nextNumber: 859 },
         lastProductImport: null,
@@ -25,7 +25,7 @@ window.app = {
         console.log("📡 App Initializing...");
         this.setupNavigation();
         this.setupTheme();
-        
+
         // Verificamos si hay una sesión activa para decidir qué mostrar
         const session = localStorage.getItem('sessionUser');
         if (session) {
@@ -41,7 +41,7 @@ window.app = {
         }
 
         // Carga de DB en segundo plano (no interfiere con la UI)
-        await this.loadDB(); 
+        await this.loadDB();
         lucide.createIcons();
     },
 
@@ -56,7 +56,7 @@ window.app = {
         const userVal = document.getElementById('login-user').value.trim();
         const passVal = document.getElementById('login-pass').value;
         const btn = document.getElementById('login-btn');
-        
+
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = `<span>VALIDANDO...</span><i data-lucide="loader-2" class="animate-spin"></i>`;
@@ -68,7 +68,7 @@ window.app = {
             await this.loadDB();
         }
 
-        const user = this.data.usuarios.find(u => 
+        const user = this.data.usuarios.find(u =>
             String(u.Usuario || u.user || '').toLowerCase() === userVal.toLowerCase()
         );
 
@@ -78,9 +78,9 @@ window.app = {
                 // Login Exitoso
                 this.data.currentUser = user;
                 localStorage.setItem('sessionUser', JSON.stringify(user));
-                
+
                 this.notify(`¡Bienvenido, ${user.Nombre || user.name}!`);
-                
+
                 setTimeout(() => {
                     document.body.classList.remove('login-mode');
                     this.render('dashboard');
@@ -100,12 +100,12 @@ window.app = {
     },
 
     // --- Sincronización con Nube (Google Sheets v4.8) ---
-    scriptUrl: 'https://script.google.com/macros/s/AKfycbxXFY_LB-P5meioORPhio_15FInEgnvo1aRJtmK0N_M0dBPAfuXeevANvJ2x7wtoTo5TA/exec',
+    scriptUrl: 'https://script.google.com/macros/s/AKfycbwyF2PgiU0vDdWltWWv4caRPzszlOd7HOC93iB8qpvQ8WlCrUim8K9PohaYVOX032A00w/exec',
 
     async loadDB() {
         try {
             console.log("📡 Sincronizando con la nube (Google Script)...");
-            
+
             // Intento 1: Fetch estándar (Más rápido, funciona en servidores)
             const res = await fetch(`${this.scriptUrl}?t=${Date.now()}`);
             if (res.ok) {
@@ -143,7 +143,7 @@ window.app = {
                     this.render(this.currentView);
                 }
             }
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
     },
 
     normalizeData(data) {
@@ -183,32 +183,32 @@ window.app = {
                 const k = keys.find(key => words.some(w => key.toLowerCase().includes(w.toLowerCase())));
                 return k ? q[k] : '';
             };
-            
+
             // Recuperar detalle (Sistema de Doble Seguridad: Columna or Piggybacking)
             let items = [];
             let notes = get(['notas', 'notes', 'observa']) || '';
             const detailStr = get(['detalle', 'items', 'itemsjson', 'detalle_json']);
-            
+
             if (detailStr && String(detailStr).length > 2) {
-                try { 
-                    items = typeof detailStr === 'string' ? JSON.parse(detailStr) : detailStr; 
-                } catch(e) {}
-            } 
-            
+                try {
+                    items = typeof detailStr === 'string' ? JSON.parse(detailStr) : detailStr;
+                } catch (e) { }
+            }
+
             // Si la columna Detalle falló, intentamos recuperar del "Plan B" en Notas
             if (items.length === 0) {
                 if (notes.includes(" ITEMS:")) {
                     const parts = notes.split(" ITEMS:");
                     notes = parts[0];
-                    try { items = JSON.parse(parts[1]); } catch(e) {}
+                    try { items = JSON.parse(parts[1]); } catch (e) { }
                 } else if (notes.includes(" [DETALLE:")) {
                     const parts = notes.split(" [DETALLE:");
                     notes = parts[0];
-                    try { items = JSON.parse(parts[1].replace("]", "")); } catch(e) {}
+                    try { items = JSON.parse(parts[1].replace("]", "")); } catch (e) { }
                 } else if (notes.includes(" @@")) {
                     const parts = notes.split(" @@");
                     notes = parts[0];
-                    try { items = JSON.parse(decodeURIComponent(escape(window.atob(parts[1])))); } catch(e) {}
+                    try { items = JSON.parse(decodeURIComponent(escape(window.atob(parts[1])))); } catch (e) { }
                 }
             }
 
@@ -261,7 +261,7 @@ window.app = {
 
         this.data.usuarios = data.usuarios || data.users || [];
         this.data.config = data.config || { nextNumber: 859 };
-        
+
         this.data.lastProductImport = conf.lastProductImport || data.lastProductImport || null;
         this.data.lastCustomerImport = conf.lastCustomerImport || data.lastCustomerImport || null;
         this.data.lastSellerImport = conf.lastSellerImport || data.lastSellerImport || null;
@@ -269,18 +269,18 @@ window.app = {
 
     async saveDB(tableKey = null) {
         const payload = {};
-        
+
         // Si specificKey es nulo, enviamos todo (legacy). Si no, solo la tabla necesaria.
         if (tableKey === 'products' || !tableKey) {
             payload.products = this.data.productos.map(p => ({ "Producto": p.code, "Descripcion": p.description, "ExistenciaActual": p.stock, "PrecioMayorista": p.price }));
         }
-        
+
         if (tableKey === 'customers' || !tableKey) {
-            payload.customers = this.data.clientes.map(c => ({ 
-                "Cliente": c.id, 
-                "RazonSocial": c.razonSocial, 
+            payload.customers = this.data.clientes.map(c => ({
+                "Cliente": c.id,
+                "RazonSocial": c.razonSocial,
                 "NombreComercial": c.nombreComercial,
-                "RTN": c.rtn, 
+                "RTN": c.rtn,
                 "Direccion": c.address,
                 "Telefonos": c.phones,
                 "Correo": c.email || ""
@@ -293,15 +293,15 @@ window.app = {
 
         if (tableKey === 'quotes' || !tableKey) {
             payload.quotes = this.data.cotizaciones.map(q => ({
-                "ID": q.id, 
-                "Numero": q.number, 
-                "Cliente": q.customerName, 
-                "CodigoCliente": q.customerCode || "", 
-                "RTN": q.rtn || "", 
-                "Vendedor": q.seller || "", 
-                "Fecha": q.date, 
-                "Vencimiento": q.dueDate || "", 
-                "Total": q.total, 
+                "ID": q.id,
+                "Numero": q.number,
+                "Cliente": q.customerName,
+                "CodigoCliente": q.customerCode || "",
+                "RTN": q.rtn || "",
+                "Vendedor": q.seller || "",
+                "Fecha": q.date,
+                "Vencimiento": q.dueDate || "",
+                "Total": q.total,
                 "Subtotal": q.subtotal || 0,
                 "ISV": q.isv || 0,
                 "Anulada": q.anulada ? "SI" : "NO",
@@ -330,7 +330,7 @@ window.app = {
             "CodigoVendedor": u.CodigoVendedor || u.sellerCode || ""
         }));
 
-        payload.config = { 
+        payload.config = {
             "nextNumber": this.data.config.nextNumber,
             "lastProductImport": this.data.lastProductImport,
             "lastCustomerImport": this.data.lastCustomerImport,
@@ -338,9 +338,9 @@ window.app = {
         };
 
         try {
-            return fetch(this.scriptUrl, { 
-                method: 'POST', 
-                mode: 'no-cors', 
+            return fetch(this.scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
                 body: JSON.stringify(payload)
             });
         } catch (error) {
@@ -354,7 +354,7 @@ window.app = {
 
 
     // --- Importaciones Masivas (Desde Excel con SheetJS) ---
-    async importFromExcel(e) { 
+    async importFromExcel(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (evt) => {
@@ -381,7 +381,7 @@ window.app = {
 
     async importCustomersFromExcel(e) {
         const file = e.target.files[0];
-        if(!file) return;
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = (evt) => {
             const data = new Uint8Array(evt.target.result);
@@ -397,7 +397,7 @@ window.app = {
                         return words.some(w => lowKey === w);
                     });
                     if (perfect) return c[perfect];
-                    
+
                     // Prioridad 2: Contiene la palabra
                     const found = k.find(key => {
                         const lowKey = key.toLowerCase();
@@ -405,7 +405,7 @@ window.app = {
                     });
                     return found ? c[found] : '';
                 };
-                
+
                 return {
                     id: String(get(['cliente', 'codigo', 'id', 'no.']) || '').replace(/^0+/, '') || '0',
                     razonSocial: get(['razonsocial', 'razon', 'social', 'nombre']),
@@ -417,7 +417,7 @@ window.app = {
                 };
             });
             this.data.lastCustomerImport = this.getAppTimestamp();
-            this.saveDB(); 
+            this.saveDB();
             this.render('customers');
             this.notify('Clientes importados correctamente', 'success');
         };
@@ -455,9 +455,9 @@ window.app = {
         if (view !== 'preview') this.lastMainView = view;
         const area = document.getElementById('content-area');
         const title = document.getElementById('view-title');
-        
+
         const titles = { 'login': 'Acceso al Sistema', 'dashboard': 'Dashboard', 'inventory': 'Inventario', 'customers': 'Clientes', 'new-quote': 'Nueva Cotización', 'history': 'Historial', 'preview': 'Vista Previa', 'sellers': 'Vendedores', 'users': 'Usuarios' };
-        
+
         // Seguridad: Verificar permiso antes de renderizar
         if (view !== 'login' && view !== 'preview' && !this.hasAccess(view)) {
             this.notify('No tiene permisos para esta sección', 'error');
@@ -475,7 +475,7 @@ window.app = {
                 const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
                 const sellerCode = this.data.currentUser.CodigoVendedor || this.data.currentUser.sellerCode;
                 let q = this.data.cotizaciones;
-                
+
                 // Si es Vendedor, filtrar solo sus datos
                 if (role === 'VENDEDOR') {
                     const sellerObj = this.data.vendedores.find(v => String(v.id) === String(sellerCode));
@@ -483,12 +483,12 @@ window.app = {
                     q = q.filter(x => x.seller === sellerName);
                 }
 
-                dataForView = { 
-                    filteredQuotes: q, 
-                    recentQuotes: q.slice(0, 10), 
-                    productos: this.data.productos, 
-                    clientes: this.data.clientes, 
-                    vendedores: this.data.vendedores, 
+                dataForView = {
+                    filteredQuotes: q,
+                    recentQuotes: q.slice(0, 10),
+                    productos: this.data.productos,
+                    clientes: this.data.clientes,
+                    vendedores: this.data.vendedores,
                     usuarios: this.data.usuarios,
                     revenueLPS: q.filter(x => x.currency === 'LPS').reduce((a, b) => a + (b.total || 0), 0),
                     revenueUSD: q.filter(x => x.currency === 'USD').reduce((a, b) => a + (b.total || 0), 0),
@@ -502,9 +502,9 @@ window.app = {
             else if (view === 'sellers') dataForView = this.data.vendedores;
             else if (view === 'users') dataForView = this.data; // Pasamos todo el objeto data
             else if (view === 'new-quote') {
-                dataForView = { 
-                    productos: this.data.productos, 
-                    clientes: this.data.clientes, 
+                dataForView = {
+                    productos: this.data.productos,
+                    clientes: this.data.clientes,
                     vendedores: this.data.vendedores,
                     cotizaciones: this.data.cotizaciones,
                     currentUser: this.data.currentUser
@@ -514,7 +514,7 @@ window.app = {
                 const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
                 const sellerCode = this.data.currentUser.CodigoVendedor || this.data.currentUser.sellerCode;
                 let q = this.data.cotizaciones;
-                
+
                 if (role === 'VENDEDOR') {
                     const sellerObj = this.data.vendedores.find(v => String(v.id) === String(sellerCode));
                     const sellerName = sellerObj ? sellerObj.name : "";
@@ -522,7 +522,7 @@ window.app = {
                 }
                 dataForView = q;
             }
-            else if (view === 'preview') dataForView = previewData;
+            else if (view === 'preview') { dataForView = previewData; this.currentPreviewQuote = previewData; }
         }
 
         if (window.Views && window.Views[view]) {
@@ -548,7 +548,7 @@ window.app = {
         }
 
         lucide.createIcons();
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
     },
 
     // --- LÓGICA DE PROCESOS (ACCIONES) ---
@@ -607,7 +607,7 @@ window.app = {
             Clave: document.getElementById('m-pass').value,
             CodigoVendedor: document.getElementById('m-role').value === 'Vendedor' ? document.getElementById('m-seller-code').value : ""
         };
-        if(!u.Usuario || !u.Nombre || !u.Clave) return this.notify('Faltan campos', 'error');
+        if (!u.Usuario || !u.Nombre || !u.Clave) return this.notify('Faltan campos', 'error');
         this.data.usuarios.unshift(u);
         document.getElementById('modal-container').classList.add('hidden');
         this.render('users');
@@ -618,11 +618,11 @@ window.app = {
     editUser(id) {
         console.log("✍️ Intentando editar usuario:", id);
         const searchId = String(id || '').trim().toLowerCase();
-        const u = this.data.usuarios.find(x => 
+        const u = this.data.usuarios.find(x =>
             String(x.Usuario || x.user || '').trim().toLowerCase() === searchId
         );
-        
-        if(!u) {
+
+        if (!u) {
             console.warn("⚠️ Usuario no encontrado en memoria:", id);
             return;
         }
@@ -673,7 +673,7 @@ window.app = {
     updateUser() {
         const userId = document.getElementById('m-user').value;
         const u = this.data.usuarios.find(x => (x.Usuario || x.user) === userId);
-        if(u) {
+        if (u) {
             u.Nombre = document.getElementById('m-name').value.trim();
             u.Rol = document.getElementById('m-role').value;
             u.Clave = document.getElementById('m-pass').value;
@@ -854,22 +854,22 @@ window.app = {
         if (!val) return 'C/F';
         let s = String(val).trim().toUpperCase();
         if (s === 'C/F' || s === 'CF') return 'C/F';
-        
+
         let digits = s.replace(/\D/g, ''); // Quitar cualquier cosa que no sea número
         if (!digits) return 'C/F';
-        
+
         // Rellenar con ceros a la izquierda hasta los 14 caracteres requeridos
         return digits.padStart(14, '0');
     },
 
     getLocalDate(date = new Date()) { return date.toISOString().split('T')[0]; },
-    getAppTimestamp() { 
+    getAppTimestamp() {
         const d = new Date();
         const date = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
         const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
         return `${date} ${time}`;
     },
-    formatDisplayDate(d) { if(!d) return ''; const p = d.split('T')[0].split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; },
+    formatDisplayDate(d) { if (!d) return ''; const p = d.split('T')[0].split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; },
     formatFullDate(val) {
         if (!val) return 'Sin fecha';
         if (typeof val === 'string' && val.includes('T')) {
@@ -885,25 +885,25 @@ window.app = {
         return val;
     },
     parseDate(s) { return s ? new Date(s.split('T')[0]).getTime() : 0; },
-    getStatus(q) { 
+    getStatus(q) {
         if (q.anulada) return { label: 'Anulada', color: '#94a3b8' }; // Gris para anuladas
         if (q.facturada) return { label: 'Facturada', color: '#3b82f6' };
         if (!q.dueDate) return { label: 'Activa', color: '#22c55e' };
-        
+
         const now = new Date();
-        now.setHours(0,0,0,0);
+        now.setHours(0, 0, 0, 0);
         const due = new Date(q.dueDate + 'T23:59:59');
-        
+
         if (due < now) return { label: 'Vencida', color: '#ef4444' };
-        
+
         const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
         if (diffDays <= 7) return { label: 'Por vencer', color: '#f59e0b' };
-        
-        return { label: 'Activa', color: '#22c55e' }; 
+
+        return { label: 'Activa', color: '#22c55e' };
     },
     notify(msg, type = 'success') {
         const c = document.getElementById('notification-container');
-        if(!c) return;
+        if (!c) return;
         const t = document.createElement('div'); t.className = `toast ${type} show`; t.innerText = msg;
         c.appendChild(t); setTimeout(() => t.remove(), 3000);
     },
@@ -964,18 +964,18 @@ window.app = {
     },
     onProductSelect(i) {
         const p = this.data.productos.find(x => String(x.code) === i.value.split(' - ')[0]);
-        if(p) { 
+        if (p) {
             const tr = i.closest('tr');
             let price = p.price;
             const currency = document.getElementById('quote-currency') ? document.getElementById('quote-currency').value : 'LPS';
             const rate = this.parseNum(document.getElementById('quote-exchange-rate') ? document.getElementById('quote-exchange-rate').value : 0) || 1;
-            
+
             if (currency === 'USD') {
                 price = price / rate;
             }
-            
-            tr.querySelector('.price-input').value = price.toFixed(2); 
-            this.calculateTotals(); 
+
+            tr.querySelector('.price-input').value = price.toFixed(2);
+            this.calculateTotals();
         }
     },
     addQuoteItem(itemData = null) {
@@ -1048,16 +1048,16 @@ window.app = {
             }
         });
         const statusData = { 'Activa': 0, 'Facturada': 0, 'Vencida': 0, 'Por vencer': 0, 'Anulada': 0 };
-        quotes.forEach(q => { const s = this.getStatus(q).label; if(statusData.hasOwnProperty(s)) statusData[s] += (q.total || 0); });
+        quotes.forEach(q => { const s = this.getStatus(q).label; if (statusData.hasOwnProperty(s)) statusData[s] += (q.total || 0); });
 
         window.myChart2 = new Chart(ctxStatus, {
             type: 'doughnut',
-            data: { 
-                labels: Object.keys(statusData), 
-                datasets: [{ 
-                    data: Object.values(statusData), 
-                    backgroundColor: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b', '#94a3b8'] 
-                }] 
+            data: {
+                labels: Object.keys(statusData),
+                datasets: [{
+                    data: Object.values(statusData),
+                    backgroundColor: ['#22c55e', '#3b82f6', '#ef4444', '#f59e0b', '#94a3b8']
+                }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
@@ -1066,13 +1066,13 @@ window.app = {
         const ctxSeller = document.getElementById('sellerPerformanceChart');
         if (ctxSeller) {
             if (window.myChart3) window.myChart3.destroy();
-            
+
             const sellerData = {};
             quotes.forEach(q => {
                 const s = q.seller || 'General';
                 if (!sellerData[s]) sellerData[s] = { count: 0, value: 0 };
                 sellerData[s].count++;
-                
+
                 // Consolidar valor en LPS para comparación justa (si es USD, convertir con su tasa)
                 if (q.currency === 'USD') {
                     sellerData[s].value += (q.total * (q.exchangeRate || 1));
@@ -1109,7 +1109,7 @@ window.app = {
         const ctxProd = document.getElementById('productPerformanceChart');
         if (ctxProd) {
             if (window.myChart4) window.myChart4.destroy();
-            
+
             const productData = {};
             quotes.forEach(q => {
                 const items = q.items || [];
@@ -1117,7 +1117,7 @@ window.app = {
                     const desc = item.description || item.code || 'Desconocido';
                     if (!productData[desc]) productData[desc] = { qty: 0, value: 0 };
                     productData[desc].qty += (item.qty || 0);
-                    
+
                     // Valor proporcional del item en LPS
                     let itemVal = (item.qty * item.price);
                     if (q.currency === 'USD') itemVal *= (q.exchangeRate || 1);
@@ -1173,7 +1173,7 @@ window.app = {
 
         // Caso: Anular con Auditoría
         const modal = document.getElementById('modal-container');
-            modal.innerHTML = `
+        modal.innerHTML = `
                 <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:35px; border-radius:24px; width:450px; border: 1px solid var(--border-color);">
                     <div style="width:60px; height:60px; background:rgba(239, 68, 68, 0.1); color:#ef4444; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
                         <i data-lucide="alert-triangle" style="width:30px; height:30px;"></i>
@@ -1190,29 +1190,29 @@ window.app = {
                     </div>
                 </div>
             `;
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-            
-            document.getElementById('void-reason').focus();
-            
-            document.getElementById('btn-confirm-void').onclick = () => {
-                const reason = document.getElementById('void-reason').value.trim();
-                if (reason.length < 5) {
-                    return this.notify('Por favor, ingresa un motivo más detallado', 'error');
-                }
-                
-                // Registro de Auditoría
-                q.anulada = true;
-                q.facturada = false;
-                q.anuladaMotivo = reason;
-                q.anuladaPor = this.data.currentUser.Nombre || this.data.currentUser.name;
-                q.anuladaFecha = this.getAppTimestamp();
-                
-                this.saveDB();
-                document.getElementById('modal-container').classList.add('hidden');
-                this.render(this.currentView);
-                this.notify(`Cotización #${q.number} ANULADA con éxito`);
-            };
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+
+        document.getElementById('void-reason').focus();
+
+        document.getElementById('btn-confirm-void').onclick = () => {
+            const reason = document.getElementById('void-reason').value.trim();
+            if (reason.length < 5) {
+                return this.notify('Por favor, ingresa un motivo más detallado', 'error');
+            }
+
+            // Registro de Auditoría
+            q.anulada = true;
+            q.facturada = false;
+            q.anuladaMotivo = reason;
+            q.anuladaPor = this.data.currentUser.Nombre || this.data.currentUser.name;
+            q.anuladaFecha = this.getAppTimestamp();
+
+            this.saveDB();
+            document.getElementById('modal-container').classList.add('hidden');
+            this.render(this.currentView);
+            this.notify(`Cotización #${q.number} ANULADA con éxito`);
+        };
     },
 
     togglePlazoField(val) {
@@ -1258,7 +1258,7 @@ window.app = {
     updatePricesByRate() {
         const rate = this.parseNum(document.getElementById('quote-exchange-rate').value);
         const currency = document.getElementById('quote-currency').value;
-        
+
         if (currency === 'USD') {
             document.querySelectorAll('#quote-items-body tr').forEach(tr => {
                 const prodInput = tr.querySelector('.prod-input');
@@ -1279,7 +1279,7 @@ window.app = {
 
     numberToWords(num, currency = 'LPS') {
         if (!num || num === 0) return `CERO ${currency === 'USD' ? 'DÓLARES' : 'LEMPIRAS'} CON 00/100`;
-        
+
         const units = ['', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
         const tens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
         const tens2 = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
@@ -1372,11 +1372,11 @@ window.app = {
 
         // Búsqueda robusta del cliente para no perder código ni teléfono
         const customerClean = customer.trim().toLowerCase();
-        const clientObj = this.data.clientes.find(c => 
+        const clientObj = this.data.clientes.find(c =>
             (c.razonSocial || '').toLowerCase().trim() === customerClean ||
             (c.nombreComercial || '').toLowerCase().trim() === customerClean
         );
-        
+
         const customerCode = clientObj ? clientObj.id : '';
         const phones = clientObj ? clientObj.phones : '';
 
@@ -1452,7 +1452,7 @@ window.app = {
     loadQuoteToForm() {
         const val = document.getElementById('recall-search').value.trim();
         if (!val) return;
-        
+
         let quote = null;
         if (val.includes('|')) {
             const num = val.split('|')[0].trim();
@@ -1460,13 +1460,13 @@ window.app = {
         } else {
             // Búsqueda inteligente: número exacto o parcial en nombre/RTN
             const search = val.toLowerCase();
-            quote = this.data.cotizaciones.find(q => 
-                String(q.number) === val || 
+            quote = this.data.cotizaciones.find(q =>
+                String(q.number) === val ||
                 (q.customerName || '').toLowerCase().includes(search) ||
                 (q.rtn || '').toLowerCase().includes(search)
             );
         }
-        
+
         if (!quote) return this.notify('Cotización no encontrada', 'error');
 
         document.getElementById('modal-container').classList.add('hidden');
@@ -1478,7 +1478,7 @@ window.app = {
         const emailField = document.getElementById('quote-email');
         if (emailField) emailField.value = quote.email || '';
         document.getElementById('quote-notes').value = quote.notes || '';
-        
+
         const currSelect = document.getElementById('quote-currency');
         if (currSelect) {
             currSelect.value = quote.currency || 'LPS';
@@ -1489,7 +1489,7 @@ window.app = {
 
         const tipoSelect = document.getElementById('quote-tipo');
         if (tipoSelect) tipoSelect.value = quote.tipo || 'Nacional';
-        
+
         const condSelect = document.getElementById('quote-payment-condition');
         if (condSelect) {
             condSelect.value = quote.paymentCondition || 'Contado';
@@ -1497,7 +1497,7 @@ window.app = {
         }
         const plazoInput = document.getElementById('quote-plazo');
         if (plazoInput) plazoInput.value = quote.plazo || 0;
-        
+
         // El vendedor solo se puebla si no está deshabilitado (rol Vendedor)
         const vInput = document.getElementById('quote-vendedor');
         if (vInput && !vInput.disabled) vInput.value = quote.seller || '';
@@ -1522,7 +1522,7 @@ window.app = {
 
         this.searchTimeout = setTimeout(() => {
             let q = [...this.data.cotizaciones];
-            
+
             // Filtro por rol (Seguridad)
             const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
             if (role === 'VENDEDOR') {
@@ -1555,8 +1555,8 @@ window.app = {
             // Filtro por Texto (Nombre o Numero)
             if (query) {
                 const low = query.toLowerCase();
-                q = q.filter(x => 
-                    String(x.number).includes(low) || 
+                q = q.filter(x =>
+                    String(x.number).includes(low) ||
                     (x.customerName || '').toLowerCase().includes(low)
                 );
             }
@@ -1579,7 +1579,7 @@ window.app = {
             if (area && window.Views.dashboard) {
                 area.innerHTML = window.Views.dashboard(dataForView);
                 this.initCharts(q);
-                
+
                 // RESTAURAR FOCO Y POSICIÓN DEL CURSOR
                 const searchInput = document.getElementById('dash-filter-q');
                 if (searchInput && query) {
@@ -1595,7 +1595,7 @@ window.app = {
 
         this.searchTimeout = setTimeout(() => {
             const query = val.toLowerCase();
-            const filtered = this.data.clientes.filter(c => 
+            const filtered = this.data.clientes.filter(c =>
                 (c.razonSocial || '').toLowerCase().includes(query) ||
                 (c.nombreComercial || '').toLowerCase().includes(query) ||
                 (c.rtn || '').toLowerCase().includes(query) ||
@@ -1622,7 +1622,7 @@ window.app = {
 
         this.searchTimeout = setTimeout(() => {
             const query = val.toLowerCase().trim();
-            const filtered = this.data.productos.filter(p => 
+            const filtered = this.data.productos.filter(p =>
                 (p.code || '').toLowerCase().includes(query) ||
                 (p.description || '').toLowerCase().includes(query)
             );
@@ -1647,7 +1647,7 @@ window.app = {
 
         this.searchTimeout = setTimeout(() => {
             const query = val.toLowerCase().trim();
-            const filtered = this.data.vendedores.filter(v => 
+            const filtered = this.data.vendedores.filter(v =>
                 (v.name || '').toLowerCase().includes(query) ||
                 String(v.id).toLowerCase().includes(query)
             );
@@ -1763,8 +1763,8 @@ window.app = {
 
         if (query) {
             const low = query.toLowerCase();
-            q = q.filter(x => 
-                String(x.number).includes(low) || 
+            q = q.filter(x =>
+                String(x.number).includes(low) ||
                 (x.customerName || '').toLowerCase().includes(low)
             );
         }
@@ -1776,7 +1776,7 @@ window.app = {
         }
         if (from || to) {
             q = q.filter(x => {
-                const qDate = x.date; 
+                const qDate = x.date;
                 if (from && qDate < from) return false;
                 if (to && qDate > to) return false;
                 return true;
@@ -1827,8 +1827,8 @@ window.app = {
 
             if (query) {
                 const low = query.toLowerCase();
-                q = q.filter(x => 
-                    String(x.number).includes(low) || 
+                q = q.filter(x =>
+                    String(x.number).includes(low) ||
                     (x.customerName || '').toLowerCase().includes(low)
                 );
             }
@@ -1843,7 +1843,7 @@ window.app = {
 
             if (from || to) {
                 q = q.filter(x => {
-                    const qDate = x.date; 
+                    const qDate = x.date;
                     if (from && qDate < from) return false;
                     if (to && qDate > to) return false;
                     return true;
@@ -1863,5 +1863,270 @@ window.app = {
                 }
             }
         }, 300);
+    },
+
+    exportQuoteToExcel() {
+        const q = this.currentPreviewQuote;
+        if (!q) return this.notify('No hay cotización activa', 'error');
+
+        const sym = q.currency === 'USD' ? 'USD' : 'LPS';
+
+        // Hoja combinada: encabezado + detalle
+        const rows = [
+            ['CHIPS, S.A. — COTIZACIÓN'],
+            [],
+            ['No. Cotización', `#${q.number}`],
+            ['Fecha', this.formatDisplayDate(q.date)],
+            ['Vencimiento', this.formatDisplayDate(q.dueDate)],
+            ['Cliente', q.customerName],
+            ['RTN', q.rtn || 'C/F'],
+            ['Dirección', q.address || ''],
+            ['Teléfono', q.phones || ''],
+            ['Correo', q.email || ''],
+            ['Vendedor', q.seller || 'General'],
+            ['Condición', q.paymentCondition === 'Credito' ? `Crédito ${q.plazo || 0} días` : 'Contado'],
+            ['Moneda', sym],
+            ['Tipo', q.tipo || 'Nacional'],
+            ['Notas', q.notes || ''],
+            [],
+            ['CÓDIGO', 'DESCRIPCIÓN', 'CANTIDAD', `PRECIO (${sym})`, `TOTAL (${sym})`],
+            ...(q.items || []).map(i => [
+                i.code || '',
+                i.description || '',
+                Math.round(i.qty || 0),
+                Number(i.price || 0),
+                Number(i.total || 0)
+            ]),
+            [],
+            ['', '', '', 'SUBTOTAL', Number(q.subtotal || 0)],
+            ['', '', '', (q.tipo === 'Extranjera' ? 'ISV (Exento)' : 'ISV 15%'), Number(q.isv || 0)],
+            ['', '', '', 'TOTAL', Number(q.total || 0)]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        // Anchos de columna
+        ws['!cols'] = [{ wch: 15 }, { wch: 45 }, { wch: 12 }, { wch: 18 }, { wch: 18 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Cotización');
+        const fname = `Cotizacion_${q.number}_${(q.customerName || '').replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+        XLSX.writeFile(wb, fname);
+        this.notify('Cotización exportada a Excel');
+    },
+
+    async uploadQuoteToDrive() {
+        const q = this.currentPreviewQuote;
+        if (!q) return this.notify('No hay cotizacion activa', 'error');
+
+        if (typeof window.jspdf === 'undefined') {
+            return this.notify('jsPDF no cargado. Recarga la pagina.', 'error');
+        }
+
+        this.notify('Generando PDF...');
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            const sym = q.currency === 'USD' ? '$' : 'L.';
+            const fmt = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const W = 210;
+            const mg = 12;
+            let y = 0;
+
+            // ── HEADER ──────────────────────────────────────────────────────
+            pdf.setFillColor(34, 197, 94);
+            pdf.rect(0, 0, W, 28, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(18);
+            pdf.text('CHIPS, S.A.', mg, 12);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Cotizacion Profesional', mg, 19);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(14);
+            pdf.text('COTIZACION #' + q.number, W - mg, 12, { align: 'right' });
+            pdf.setFontSize(8.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Fecha: ' + this.formatDisplayDate(q.date), W - mg, 19, { align: 'right' });
+            pdf.text('Vence: ' + this.formatDisplayDate(q.dueDate), W - mg, 24, { align: 'right' });
+
+            // ── CLIENTE ──────────────────────────────────────────────────────
+            y = 34;
+            pdf.setFillColor(241, 245, 249);
+            pdf.roundedRect(mg, y, W - 2 * mg, 32, 2, 2, 'F');
+
+            const labels = [['CLIENTE', mg + 4, y + 6], ['RTN', 80, y + 6], ['VENDEDOR', 140, y + 6]];
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139);
+            labels.forEach(([t, x, yy]) => pdf.text(t, x, yy));
+
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59);
+            pdf.text((q.customerName || '').substring(0, 28), mg + 4, y + 13);
+            pdf.text((q.rtn || 'C/F').substring(0, 14), 80, y + 13);
+            pdf.text((q.seller || 'General').substring(0, 18), 140, y + 13);
+
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(71, 85, 105);
+            const cond = q.paymentCondition === 'Credito' ? 'Credito ' + (q.plazo || 0) + ' dias' : 'Contado';
+            pdf.text('Condicion: ' + cond, mg + 4, y + 20);
+            pdf.text('Tipo: ' + (q.tipo || 'Nacional') + '   Moneda: ' + (q.currency || 'LPS'), 80, y + 20);
+            if (q.address) pdf.text('Dir: ' + q.address.substring(0, 50), mg + 4, y + 27);
+            if (q.phones) pdf.text('Tel: ' + q.phones, 140, y + 27);
+
+            // ── TABLA ITEMS ──────────────────────────────────────────────────
+            y = 72;
+            const colX = { code: mg, desc: mg + 19, qty: 143, price: 163, total: W - mg };
+            const rowH = 7;
+
+            pdf.setFillColor(34, 197, 94);
+            pdf.rect(mg, y, W - 2 * mg, 8, 'F');
+            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
+            pdf.text('COD.', colX.code + 1, y + 5.5);
+            pdf.text('DESCRIPCION', colX.desc + 1, y + 5.5);
+            pdf.text('CANT.', colX.qty, y + 5.5, { align: 'right' });
+            pdf.text('PRECIO', colX.price, y + 5.5, { align: 'right' });
+            pdf.text('TOTAL', colX.total, y + 5.5, { align: 'right' });
+            y += 8;
+
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
+            (q.items || []).forEach((item, i) => {
+                if (y > 262) { pdf.addPage(); y = 15; }
+                if (i % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(mg, y, W - 2 * mg, rowH, 'F'); }
+                pdf.setTextColor(30, 41, 59);
+                pdf.text(String(item.code || '').substring(0, 8), colX.code + 1, y + 5);
+                pdf.text(String(item.description || '').substring(0, 54), colX.desc + 1, y + 5);
+                pdf.text(Math.round(item.qty || 0).toLocaleString('en-US'), colX.qty, y + 5, { align: 'right' });
+                pdf.text(sym + ' ' + fmt(item.price), colX.price, y + 5, { align: 'right' });
+                pdf.text(sym + ' ' + fmt(item.total), colX.total, y + 5, { align: 'right' });
+                y += rowH;
+            });
+
+            // ── TOTALES ──────────────────────────────────────────────────────
+            y += 3;
+            pdf.setDrawColor(226, 232, 240);
+            pdf.line(mg, y, W - mg, y);
+            y += 6;
+
+            const totX = 145;
+            pdf.setFontSize(9); pdf.setTextColor(100, 116, 139); pdf.setFont('helvetica', 'normal');
+            pdf.text('Subtotal:', totX, y);
+            pdf.setTextColor(30, 41, 59);
+            pdf.text(sym + ' ' + fmt(q.subtotal), W - mg, y, { align: 'right' });
+            y += 6;
+
+            pdf.setTextColor(100, 116, 139);
+            if (q.tipo === 'Extranjera') {
+                pdf.text('ISV:', totX, y);
+                pdf.setTextColor(30, 41, 59); pdf.text('Exento', W - mg, y, { align: 'right' });
+            } else {
+                pdf.text('ISV 15%:', totX, y);
+                pdf.setTextColor(30, 41, 59); pdf.text(sym + ' ' + fmt(q.isv), W - mg, y, { align: 'right' });
+            }
+            y += 3;
+
+            pdf.setFillColor(34, 197, 94);
+            pdf.roundedRect(totX - 3, y, W - mg - totX + 3, 10, 2, 2, 'F');
+            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10);
+            pdf.text('TOTAL:', totX + 1, y + 7);
+            pdf.text(sym + ' ' + fmt(q.total), W - mg - 2, y + 7, { align: 'right' });
+            y += 15;
+
+            // ── NOTAS ────────────────────────────────────────────────────────
+            if (q.notes && y < 270) {
+                pdf.setFillColor(254, 252, 232);
+                pdf.roundedRect(mg, y, W - 2 * mg, 12, 2, 2, 'F');
+                pdf.setTextColor(161, 98, 7); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
+                pdf.text('Notas:', mg + 3, y + 5);
+                pdf.setFont('helvetica', 'normal'); pdf.setTextColor(120, 80, 20);
+                pdf.text(q.notes.substring(0, 95), mg + 3, y + 10);
+            }
+
+            // ── FOOTER ───────────────────────────────────────────────────────
+            pdf.setFillColor(34, 197, 94);
+            pdf.rect(0, 285, W, 12, 'F');
+            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
+            pdf.text('Chips, S.A.  |  (+504) 2544-0212  |  ventas@chipssa.net', W / 2, 293, { align: 'center' });
+
+            // ── SUBIR A DRIVE ─────────────────────────────────────────────────
+            const base64PDF = pdf.output('datauristring').split(',')[1];
+            const fileName = 'Cotizacion_' + q.number + '_' + (q.customerName || '').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+
+            this.notify('Subiendo PDF a Google Drive...');
+
+            const response = await fetch(this.scriptUrl, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'uploadPDF', fileName, base64: base64PDF })
+            });
+
+            const rawText = await response.text();
+
+            // Diagnóstico: el Apps Script devolvió "OK" → el bloque uploadPDF no está aplicado
+            if (rawText.trim() === 'OK') {
+                throw new Error('El Apps Script no tiene el bloque uploadPDF. Verifica que pegaste el codigo nuevo y redespliegaste con Nueva Version.');
+            }
+            // Diagnóstico: respuesta HTML → error interno de Apps Script
+            if (rawText.trim().startsWith('<')) {
+                throw new Error('El Apps Script devolvio un error HTML. Revisa los logs en Google Apps Script.');
+            }
+
+            let result;
+            try { result = JSON.parse(rawText); } catch (e) {
+                throw new Error('Respuesta invalida del servidor: ' + rawText.substring(0, 80));
+            }
+
+            if (result.error) throw new Error('Apps Script: ' + result.error);
+            if (!result.driveUrl) throw new Error('No se recibio URL de Google Drive');
+
+
+            // ── COPIAR LINK AL PORTAPAPELES ───────────────────────────────────
+            const driveUrl = result.driveUrl;
+            let copied = false;
+
+            // Método 1: execCommand (funciona en file:// y HTTPS)
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = driveUrl;
+                ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                copied = document.execCommand('copy');
+                document.body.removeChild(ta);
+            } catch (e) { copied = false; }
+
+            // Método 2: clipboard API (funciona en HTTPS/GitHub Pages)
+            if (!copied) {
+                try {
+                    await navigator.clipboard.writeText(driveUrl);
+                    copied = true;
+                } catch (e) { copied = false; }
+            }
+
+            if (copied) {
+                this.notify('✅ PDF en Drive. Enlace copiado — pégalo en WhatsApp.');
+            } else {
+                // Fallback: modal con el link para copiar manualmente
+                const mc = document.getElementById('modal-container');
+                mc.innerHTML = `
+                    <div class="modal glass" style="background:var(--card-bg);padding:30px;border-radius:20px;width:480px;border:1px solid var(--border-color);">
+                        <h3 style="margin:0 0 12px;color:var(--text-primary);">📎 Enlace del PDF en Drive</h3>
+                        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">Selecciona y copia el enlace para compartirlo en WhatsApp:</p>
+                        <input id="drive-url-input" type="text" value="${driveUrl}" readonly
+                            onclick="this.select()"
+                            style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);font-size:0.8rem;box-sizing:border-box;margin-bottom:14px;">
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button onclick="document.getElementById('modal-container').classList.add('hidden')"
+                                style="padding:8px 18px;border-radius:10px;border:1px solid var(--border-color);background:transparent;color:var(--text-primary);cursor:pointer;">Cerrar</button>
+                            <button onclick="document.getElementById('drive-url-input').select();document.execCommand('copy');window.app.notify('Enlace copiado.');document.getElementById('modal-container').classList.add('hidden');"
+                                style="padding:8px 18px;border-radius:10px;border:none;background:#25D366;color:white;font-weight:600;cursor:pointer;">Copiar</button>
+                        </div>
+                    </div>`;
+                mc.classList.remove('hidden');
+            }
+
+        } catch (err) {
+            console.error('Error al generar PDF:', err);
+            this.notify('Error: ' + (err.message || 'No se pudo generar el PDF'), 'error');
+        }
     }
 };
+

@@ -5,9 +5,21 @@
 window.Views = window.Views || {};
 
 window.Views.preview = (q) => `
-    <div class="no-print mb-4" style="display:flex; gap:1rem;">
-        <button class="btn btn-secondary" onclick="window.app.render(window.app.lastMainView || 'dashboard')">Volver</button> 
-        <button class="btn btn-primary" onclick="window.print()"><i data-lucide="printer"></i> Imprimir</button>
+    <div class="no-print mb-4" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-secondary" onclick="window.app.render(window.app.lastMainView || 'dashboard')" style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="arrow-left" style="width:16px;"></i> Volver
+        </button>
+        <button class="btn btn-primary" onclick="window.print()" style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="printer" style="width:16px;"></i> Imprimir / PDF
+        </button>
+        <button class="btn" onclick="window.app.exportQuoteToExcel()" 
+            style="display:flex;align-items:center;gap:6px;background:#16a34a;color:white;border:none;padding:10px 18px;border-radius:10px;font-weight:600;cursor:pointer;">
+            <i data-lucide="file-spreadsheet" style="width:16px;"></i> Descargar Excel
+        </button>
+        <button class="btn" onclick="window.app.uploadQuoteToDrive()"
+            style="display:flex;align-items:center;gap:6px;background:#25D366;color:white;border:none;padding:10px 18px;border-radius:10px;font-weight:600;cursor:pointer;">
+            <i data-lucide="copy" style="width:16px;"></i> Copiar enlace PDF
+        </button>
     </div>
     <div class="print-area card glass" style="width: 100%; margin: auto; background: white !important; color: black !important; font-family: 'Inter', sans-serif; position: relative; box-sizing: border-box;">
         
