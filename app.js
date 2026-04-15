@@ -248,6 +248,7 @@ window.app = {
                 razonSocial: getVal(c, ['razon', 'social', 'nombre']),
                 nombreComercial: getVal(c, ['comercial', 'nombre']),
                 rtn: this.formatRTN(getVal(c, ['RTN', 'rtn', 'fiscal', 'id_fiscal', 'RTN_CLIENTE'])),
+                sucursal: getVal(c, ['sucursal', 'branch', 'sede', 'tienda']),
                 address: getVal(c, ['direccion', 'address']),
                 phones: getVal(c, ['telefono', 'phone']),
                 email: getVal(c, ['correo', 'email', 'mail'])
@@ -281,6 +282,7 @@ window.app = {
                 "RazonSocial": c.razonSocial,
                 "NombreComercial": c.nombreComercial,
                 "RTN": c.rtn,
+                "Sucursal": c.sucursal || "",
                 "Direccion": c.address,
                 "Telefonos": c.phones,
                 "Correo": c.email || ""
