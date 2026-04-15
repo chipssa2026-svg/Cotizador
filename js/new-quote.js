@@ -46,7 +46,10 @@ window.Views['new-quote'] = (d) => {
                 <div class="mb-3"><label>Cliente</label><input type="text" id="quote-customer" placeholder="Nombre del cliente..." list="customers-datalist" onchange="app.onCustomerSelect(this)"></div>
                 <div class="mb-3"><label>RTN / ID</label><input type="text" id="quote-rtn" placeholder="RTN del cliente..."></div>
                 <div class="mb-3"><label>Dirección</label><input type="text" id="quote-address" placeholder="Dirección del cliente..."></div>
-                <div class="mb-3"><label>Correo Electrónico</label><input type="email" id="quote-email" placeholder="correo@ejemplo.com"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mb-3">
+                    <div><label>Correo Electrónico</label><input type="email" id="quote-email" placeholder="correo@ejemplo.com"></div>
+                    <div><label>Teléfono</label><input type="text" id="quote-phone" placeholder="Teléfono..."></div>
+                </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <div><label>Vencimiento</label><input type="date" id="quote-due-date" value="${window.app.getLocalDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))}"></div>

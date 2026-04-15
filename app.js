@@ -959,6 +959,8 @@ window.app = {
                 document.getElementById('quote-address').value = customer.address || '';
                 const emailInput = document.getElementById('quote-email');
                 if (emailInput) emailInput.value = customer.email || '';
+                const phoneInput = document.getElementById('quote-phone');
+                if (phoneInput) phoneInput.value = customer.phones || '';
             }
         }
     },
@@ -1335,6 +1337,7 @@ window.app = {
         const rtn = this.formatRTN(document.getElementById('quote-rtn').value);
         const address = document.getElementById('quote-address').value;
         const email = document.getElementById('quote-email').value;
+        const phone = document.getElementById('quote-phone') ? document.getElementById('quote-phone').value : '';
         const seller = document.getElementById('quote-vendedor').value;
         const dueDate = document.getElementById('quote-due-date').value;
         const paymentCondition = document.getElementById('quote-payment-condition').value;
@@ -1378,7 +1381,6 @@ window.app = {
         );
 
         const customerCode = clientObj ? clientObj.id : '';
-        const phones = clientObj ? clientObj.phones : '';
 
         const q = {
             id: Date.now(),
@@ -1387,7 +1389,7 @@ window.app = {
             customerCode,
             rtn,
             address,
-            phones,
+            phones: phone,
             email,
             seller,
             date: this.getLocalDate(),
