@@ -1928,123 +1928,159 @@ window.app = {
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
             const sym = q.currency === 'USD' ? '$' : 'L.';
+            const symSp = q.currency === 'USD' ? '$ ' : 'L. ';
             const fmt = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const W = 210;
             const mg = 12;
-            let y = 0;
+            let y = 6;
+
+            // ── CARGAR LOGO ──────────────────────────────────────────────────
+            let logoData = null;
+            try {
+                const logoImg = new Image();
+                logoImg.src = 'Logo.png';
+                await new Promise(res => { logoImg.onload = res; logoImg.onerror = res; setTimeout(res, 800); });
+                if (logoImg.complete && logoImg.naturalWidth > 0) {
+                    const lc = document.createElement('canvas');
+                    lc.width = logoImg.naturalWidth; lc.height = logoImg.naturalHeight;
+                    lc.getContext('2d').drawImage(logoImg, 0, 0);
+                    logoData = lc.toDataURL('image/png');
+                }
+            } catch (e) { logoData = null; }
 
             // ── HEADER ──────────────────────────────────────────────────────
-            pdf.setFillColor(34, 197, 94);
-            pdf.rect(0, 0, W, 28, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(18);
-            pdf.text('CHIPS, S.A.', mg, 12);
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text('Cotizacion Profesional', mg, 19);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(14);
-            pdf.text('COTIZACION #' + q.number, W - mg, 12, { align: 'right' });
-            pdf.setFontSize(8.5);
-            pdf.setFont('helvetica', 'normal');
-            pdf.text('Fecha: ' + this.formatDisplayDate(q.date), W - mg, 19, { align: 'right' });
-            pdf.text('Vence: ' + this.formatDisplayDate(q.dueDate), W - mg, 24, { align: 'right' });
+            if (logoData) pdf.addImage(logoData, 'PNG', mg, y, 28, 11);
+            const txtX = logoData ? mg + 31 : mg;
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(30, 41, 59);
+            pdf.text('Chips, S.A.', txtX, y + 4);
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(68, 68, 68);
+            pdf.text('Col. El Prado, 10 Ave, 17 Calle, Circunvalacion No. 55', txtX, y + 8);
+            pdf.text('San Pedro Sula, Cortes, Honduras', txtX, y + 11.5);
+            pdf.setFont('helvetica', 'bold'); pdf.text('RTN: 05019999176400', txtX, y + 15);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(18); pdf.setTextColor(34, 197, 94);
+            pdf.text('Cotizacion #' + q.number, W - mg, y + 8, { align: 'right' });
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(100, 116, 139);
+            pdf.text('Fecha: ' + this.formatDisplayDate(q.date), W - mg, y + 15, { align: 'right' });
 
-            // ── CLIENTE ──────────────────────────────────────────────────────
-            y = 34;
-            pdf.setFillColor(241, 245, 249);
-            pdf.roundedRect(mg, y, W - 2 * mg, 32, 2, 2, 'F');
-
-            const labels = [['CLIENTE', mg + 4, y + 6], ['RTN', 80, y + 6], ['VENDEDOR', 140, y + 6]];
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139);
-            labels.forEach(([t, x, yy]) => pdf.text(t, x, yy));
-
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59);
-            pdf.text((q.customerName || '').substring(0, 28), mg + 4, y + 13);
-            pdf.text((q.rtn || 'C/F').substring(0, 14), 80, y + 13);
-            pdf.text((q.seller || 'General').substring(0, 18), 140, y + 13);
-
-            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(71, 85, 105);
-            const cond = q.paymentCondition === 'Credito' ? 'Credito ' + (q.plazo || 0) + ' dias' : 'Contado';
-            pdf.text('Condicion: ' + cond, mg + 4, y + 20);
-            pdf.text('Tipo: ' + (q.tipo || 'Nacional') + '   Moneda: ' + (q.currency || 'LPS'), 80, y + 20);
-            if (q.address) pdf.text('Dir: ' + q.address.substring(0, 50), mg + 4, y + 27);
-            if (q.phones) pdf.text('Tel: ' + q.phones, 140, y + 27);
+            // ── SECCIÓN CLIENTE ───────────────────────────────────────────────
+            y = 24;
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(6.5); pdf.setTextColor(100, 116, 139);
+            pdf.text('CLIENTE', mg, y);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(30, 41, 59);
+            pdf.text((q.customerName || '').substring(0, 55), mg, y + 6);
+            pdf.setFontSize(7.5); pdf.setTextColor(51, 65, 85);
+            const infoY = y + 11;
+            pdf.setFont('helvetica', 'bold'); pdf.text('Codigo de Cliente: ', mg, infoY);
+            pdf.setFont('helvetica', 'normal'); pdf.text(String(q.customerCode || '---'), mg + 28, infoY);
+            pdf.setFont('helvetica', 'bold'); pdf.text('RTN: ', mg, infoY + 4.5);
+            pdf.setFont('helvetica', 'normal'); pdf.text(q.rtn || 'C/F', mg + 10, infoY + 4.5);
+            pdf.setFont('helvetica', 'bold'); pdf.text('Direccion: ', mg, infoY + 9);
+            pdf.setFont('helvetica', 'normal'); pdf.text((q.address || 'Honduras').substring(0, 65), mg + 18, infoY + 9);
+            pdf.setFont('helvetica', 'bold'); pdf.text('Telefono: ', mg, infoY + 13.5);
+            pdf.setFont('helvetica', 'normal'); pdf.text(q.phones || 'N/A', mg + 16, infoY + 13.5);
+            const rightX = 138;
+            const kvRows = [
+                ['VENDEDOR:', q.seller || 'General'],
+                ['EMITE:', this.formatDisplayDate(q.dueDate)],
+                ['MONEDA:', q.currency === 'USD' ? 'Dolares (USD)' : 'Lempiras (LPS)'],
+                ['TIPO:', q.tipo || 'Nacional'],
+            ];
+            kvRows.forEach(([label, val], i) => {
+                const ry = infoY + 1 + (i * 4.5);
+                pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7); pdf.setTextColor(100, 116, 139);
+                pdf.text(label, rightX, ry);
+                pdf.setFont('helvetica', 'normal'); pdf.setTextColor(30, 41, 59);
+                pdf.text(String(val), W - mg, ry, { align: 'right' });
+            });
+            // Línea separadora verde
+            y = infoY + 19;
+            pdf.setDrawColor(34, 197, 94); pdf.setLineWidth(0.6);
+            pdf.line(mg, y, W - mg, y);
+            pdf.setLineWidth(0.2); pdf.setDrawColor(241, 245, 249);
 
             // ── TABLA ITEMS ──────────────────────────────────────────────────
-            y = 72;
-            const colX = { code: mg, desc: mg + 19, qty: 143, price: 163, total: W - mg };
+            y += 5;
+            const colCode = mg, colDesc = mg + 22, colQty = 143, colPrc = 163, colImp = W - mg;
             const rowH = 7;
-
-            pdf.setFillColor(34, 197, 94);
-            pdf.rect(mg, y, W - 2 * mg, 8, 'F');
-            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
-            pdf.text('COD.', colX.code + 1, y + 5.5);
-            pdf.text('DESCRIPCION', colX.desc + 1, y + 5.5);
-            pdf.text('CANT.', colX.qty, y + 5.5, { align: 'right' });
-            pdf.text('PRECIO', colX.price, y + 5.5, { align: 'right' });
-            pdf.text('TOTAL', colX.total, y + 5.5, { align: 'right' });
-            y += 8;
-
-            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
+            pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.4);
+            pdf.line(mg, y + 8, W - mg, y + 8);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(30, 41, 59);
+            pdf.text('CODIGO',      colCode,  y + 5.5);
+            pdf.text('DESCRIPCION', colDesc,  y + 5.5);
+            pdf.text('CANT.',       colQty,   y + 5.5, { align: 'right' });
+            pdf.text('PRECIO',      colPrc,   y + 5.5, { align: 'right' });
+            pdf.text('IMPORTE',     colImp,   y + 5.5, { align: 'right' });
+            y += 9; pdf.setLineWidth(0.2);
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5);
             (q.items || []).forEach((item, i) => {
-                if (y > 262) { pdf.addPage(); y = 15; }
-                if (i % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(mg, y, W - 2 * mg, rowH, 'F'); }
+                if (y > 255) { pdf.addPage(); y = 15; }
+                if (i % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(mg, y - 1, W - 2 * mg, rowH, 'F'); }
+                pdf.setDrawColor(241, 245, 249); pdf.line(mg, y + rowH - 1, W - mg, y + rowH - 1);
                 pdf.setTextColor(30, 41, 59);
-                pdf.text(String(item.code || '').substring(0, 8), colX.code + 1, y + 5);
-                pdf.text(String(item.description || '').substring(0, 54), colX.desc + 1, y + 5);
-                pdf.text(Math.round(item.qty || 0).toLocaleString('en-US'), colX.qty, y + 5, { align: 'right' });
-                pdf.text(sym + ' ' + fmt(item.price), colX.price, y + 5, { align: 'right' });
-                pdf.text(sym + ' ' + fmt(item.total), colX.total, y + 5, { align: 'right' });
+                const qty   = Number(item.qty   || 0);
+                const price = Number(item.price || 0);
+                const total = Number(item.total || qty * price);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(String(item.code || '').substring(0, 9),         colCode, y + 5);
+                pdf.setFont('helvetica', 'normal');
+                pdf.text(String(item.description || '').substring(0, 58), colDesc, y + 5);
+                pdf.text(Math.round(qty).toLocaleString('en-US'),         colQty,  y + 5, { align: 'right' });
+                pdf.text(symSp + fmt(price),                              colPrc,  y + 5, { align: 'right' });
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(symSp + fmt(total),                              colImp,  y + 5, { align: 'right' });
+                pdf.setFont('helvetica', 'normal');
                 y += rowH;
             });
 
-            // ── TOTALES ──────────────────────────────────────────────────────
-            y += 3;
-            pdf.setDrawColor(226, 232, 240);
-            pdf.line(mg, y, W - mg, y);
-            y += 6;
-
-            const totX = 145;
-            pdf.setFontSize(9); pdf.setTextColor(100, 116, 139); pdf.setFont('helvetica', 'normal');
-            pdf.text('Subtotal:', totX, y);
+            // ── SECCIÓN INFERIOR ─────────────────────────────────────────────
+            y += 5;
+            const bottomY = y;
+            const totX = 138;
+            if (q.notes) {
+                pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 116, 139);
+                const noteLines = pdf.splitTextToSize(q.notes, 110);
+                pdf.text(noteLines, mg, bottomY);
+            }
+            const condY = q.notes ? bottomY + 5 : bottomY;
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(30, 41, 59);
+            pdf.text('Condicion: ', mg, condY);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(q.paymentCondition === 'Credito' ? 'Credito ' + (q.plazo || 0) + ' dias' : 'Contado', mg + 20, condY);
+            pdf.setFontSize(6.5); pdf.setTextColor(100, 116, 139);
+            pdf.text('Precios sujetos a cambio sin previo aviso.', mg, condY + 4.5);
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(71, 85, 105);
+            pdf.text('Subtotal', totX, bottomY + 4);
             pdf.setTextColor(30, 41, 59);
-            pdf.text(sym + ' ' + fmt(q.subtotal), W - mg, y, { align: 'right' });
-            y += 6;
-
-            pdf.setTextColor(100, 116, 139);
-            if (q.tipo === 'Extranjera') {
-                pdf.text('ISV:', totX, y);
-                pdf.setTextColor(30, 41, 59); pdf.text('Exento', W - mg, y, { align: 'right' });
+            pdf.text(symSp + fmt(q.subtotal), W - mg, bottomY + 4, { align: 'right' });
+            if ((q.tipo || 'Nacional') === 'Nacional') {
+                pdf.setTextColor(71, 85, 105); pdf.text('ISV 15%', totX, bottomY + 10);
+                pdf.setTextColor(30, 41, 59); pdf.text(symSp + fmt(q.isv), W - mg, bottomY + 10, { align: 'right' });
             } else {
-                pdf.text('ISV 15%:', totX, y);
-                pdf.setTextColor(30, 41, 59); pdf.text(sym + ' ' + fmt(q.isv), W - mg, y, { align: 'right' });
+                pdf.setTextColor(71, 85, 105); pdf.setFont('helvetica', 'italic'); pdf.text('ISV', totX, bottomY + 10);
+                pdf.setFont('helvetica', 'normal'); pdf.setTextColor(30, 41, 59); pdf.text('Exento', W - mg, bottomY + 10, { align: 'right' });
             }
-            y += 3;
-
-            pdf.setFillColor(34, 197, 94);
-            pdf.roundedRect(totX - 3, y, W - mg - totX + 3, 10, 2, 2, 'F');
-            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10);
-            pdf.text('TOTAL:', totX + 1, y + 7);
-            pdf.text(sym + ' ' + fmt(q.total), W - mg - 2, y + 7, { align: 'right' });
-            y += 15;
-
-            // ── NOTAS ────────────────────────────────────────────────────────
-            if (q.notes && y < 270) {
-                pdf.setFillColor(254, 252, 232);
-                pdf.roundedRect(mg, y, W - 2 * mg, 12, 2, 2, 'F');
-                pdf.setTextColor(161, 98, 7); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
-                pdf.text('Notas:', mg + 3, y + 5);
-                pdf.setFont('helvetica', 'normal'); pdf.setTextColor(120, 80, 20);
-                pdf.text(q.notes.substring(0, 95), mg + 3, y + 10);
-            }
+            const tlY = bottomY + 13;
+            pdf.setDrawColor(34, 197, 94); pdf.setLineWidth(0.6);
+            pdf.line(totX, tlY, W - mg, tlY); pdf.setLineWidth(0.2);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(30, 41, 59);
+            pdf.text('TOTAL', totX, tlY + 8);
+            pdf.setTextColor(34, 197, 94);
+            pdf.text(symSp + fmt(q.total), W - mg, tlY + 8, { align: 'right' });
+            const words = this.numberToWords(q.total, q.currency);
+            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(6.5); pdf.setTextColor(71, 85, 105);
+            pdf.text(pdf.splitTextToSize('SON: ' + words, 75), W - mg, tlY + 14, { align: 'right' });
 
             // ── FOOTER ───────────────────────────────────────────────────────
-            pdf.setFillColor(34, 197, 94);
-            pdf.rect(0, 285, W, 12, 'F');
-            pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8);
-            pdf.text('Chips, S.A.  |  (+504) 2544-0212  |  ventas@chipssa.net', W / 2, 293, { align: 'center' });
+            const footerY = 282;
+            pdf.setDrawColor(226, 232, 240); pdf.setLineWidth(0.3);
+            pdf.line(mg, footerY, W - mg, footerY);
+            pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 116, 139);
+            pdf.text('PBX: (504) 2544-0212', mg + 20,  footerY + 5, { align: 'center' });
+            pdf.text('www.chipssa.net',       mg + 93,  footerY + 5, { align: 'center' });
+            pdf.text('ventas@chipssa.net',    mg + 166, footerY + 5, { align: 'center' });
+            pdf.setFontSize(6); pdf.setTextColor(148, 163, 184);
+            pdf.text('Pagina 1 de 1', W / 2, footerY + 9, { align: 'center' });
+
 
             // ── SUBIR A DRIVE ─────────────────────────────────────────────────
             const base64PDF = pdf.output('datauristring').split(',')[1];
