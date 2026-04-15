@@ -13,34 +13,27 @@ echo ============================================
 set /p folder="Ingrese el nombre del punto de inicio a restaurar: "
 
 if not exist "_backups\%folder%" (
-    echo.
     echo [ERROR] La carpeta "_backups\%folder%" no existe.
-    echo Verifique el nombre e intente de nuevo.
     pause
     exit /b
 )
 
-echo.
-echo [AVISO] Se van a sobrescribir los archivos actuales con la version: %folder%
+echo [AVISO] Se va a restaurar TODO el proyecto a la version: %folder%
 set /p confirm="¿Esta seguro? (S/N): "
 
-if /I "%confirm%" NEQ "S" (
-    echo Restauracion cancelada por el usuario.
-    pause
-    exit /b
-)
+if /I "%confirm%" NEQ "S" exit /b
 
 echo.
 echo Restaurando archivos...
-copy /Y "_backups\%folder%\app.js" "app.js"
-copy /Y "_backups\%folder%\index.html" "index.html"
-copy /Y "_backups\%folder%\style.css" "style.css"
-xcopy /S /Y "_backups\%folder%\js\*" "js\"
+copy /Y "_backups\%folder%\*.js" "." >nul
+copy /Y "_backups\%folder%\*.html" "." >nul
+copy /Y "_backups\%folder%\*.css" "." >nul
+copy /Y "_backups\%folder%\*.md" "." >nul
+copy /Y "_backups\%folder%\*.png" "." >nul
+xcopy /S /Y /E "_backups\%folder%\js\*" "js\" >nul
 
 echo.
 echo ============================================
 echo    RESTAURACION COMPLETADA EXITOSAMENTE
 echo ============================================
-echo Los archivos han sido revertidos a: %folder%
-echo.
 pause

@@ -1599,6 +1599,7 @@ window.app = {
                 (c.razonSocial || '').toLowerCase().includes(query) ||
                 (c.nombreComercial || '').toLowerCase().includes(query) ||
                 (c.rtn || '').toLowerCase().includes(query) ||
+                (c.sucursal || '').toLowerCase().includes(query) ||
                 String(c.id).includes(query)
             );
 
@@ -1716,6 +1717,7 @@ window.app = {
                 razonSocial: getVal(r, ['razonsocial', 'razon', 'social', 'nombre']),
                 nombreComercial: getVal(r, ['nombrecomercial', 'comercial', 'fantasia']),
                 rtn: this.formatRTN(getVal(r, ['idtributario', 'rtn', 'fiscal', 'nrc', 'tributario'])),
+                sucursal: getVal(r, ['sucursal', 'branch', 'sede', 'tienda']),
                 address: getVal(r, ['direccion', 'address', 'ubicacion']),
                 phones: getVal(r, ['telefonos', 'telefono', 'phone', 'celular']),
                 email: getVal(r, ['correo', 'email', 'mail'])

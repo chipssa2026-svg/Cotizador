@@ -13,13 +13,22 @@ set backupDir=_backups\%timestamp%
 if not exist _backups mkdir _backups
 mkdir %backupDir%
 
-copy app.js %backupDir%
-copy index.html %backupDir%
-copy style.css %backupDir%
-copy Logo.png %backupDir%
-xcopy /s /i /y js %backupDir%\js
+:: Copiar archivos base
+copy app.js %backupDir% >nul
+copy index.html %backupDir% >nul
+copy style.css %backupDir% >nul
+copy Logo.png %backupDir% >nul
+copy KNOWLEDGE_BASE.md %backupDir% >nul
+
+:: Copiar scripts de utilidad y ejecutables
+copy *.js %backupDir% >nul
+copy *.bat %backupDir% >nul
+
+:: Copiar carpetas
+xcopy /s /i /y js %backupDir%\js >nul
 
 echo ============================================
-echo Checkpoint creado exitosamente en: %backupDir%
+echo Checkpoint completo creado en: %backupDir%
+echo Archivos respaldados: JS, HTML, CSS, MD, BAT
 echo ============================================
 pause

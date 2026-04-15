@@ -11,6 +11,7 @@ window.Views.customers = (p = [], query = '') => {
             <td style="font-weight: 600;">${x.razonSocial}</td>
             <td>${x.nombreComercial || '---'}</td>
             <td>${x.rtn || 'N/A'}</td>
+            <td>${x.sucursal || '---'}</td>
             <td>${x.address || ''}</td>
             <td>${x.phones || ''}</td>
             <td style="font-size: 0.85rem; color: var(--primary-color);">${x.email || '---'}</td>
@@ -35,8 +36,8 @@ window.Views.customers = (p = [], query = '') => {
             </div>
         </div>
         <table>
-            <thead><tr><th>CODIGO</th><th>Razón Social</th><th>Nombre Comercial</th><th>RTN</th><th>Dirección</th><th>Teléfonos</th><th>Correo</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="7" style="text-align:center; padding:20px;">No hay clientes registrados</td></tr>'}</tbody>
+            <thead><tr><th>CODIGO</th><th>Razón Social</th><th>Nombre Comercial</th><th>RTN</th><th>SUCURSAL</th><th>Dirección</th><th>Teléfonos</th><th>Correo</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="8" style="text-align:center; padding:20px;">No hay clientes registrados</td></tr>'}</tbody>
         </table>
     </div>`;
 };
