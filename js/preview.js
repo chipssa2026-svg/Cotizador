@@ -88,7 +88,7 @@ window.Views.preview = (q) => `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
                         <td style="padding: 6px 8px; font-weight: 500;">${i.code || ''}</td>
                         <td style="padding: 6px 8px;">${i.description || 'Sin descripción'}</td>
-                        <td style="padding: 6px 8px; text-align:right;">${qty.toFixed(2)}</td>
+                        <td style="padding: 6px 8px; text-align:right;">${Math.round(qty).toLocaleString('en-US')}</td>
                         <td style="padding: 6px 8px; text-align:right;">${q.currency === 'USD' ? '$ ' : 'L. '}${price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                         <td style="padding: 6px 8px; text-align:right; font-weight: 700; white-space: nowrap;">${q.currency === 'USD' ? '$ ' : 'L. '}${rowTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     </tr>`;

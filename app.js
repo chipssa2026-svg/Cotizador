@@ -982,7 +982,7 @@ window.app = {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><input type="text" list="products-datalist" class="prod-input" value="${itemData ? (itemData.code + ' - ' + itemData.description) : ''}" placeholder="Producto..." onchange="app.onProductSelect(this)"></td>
-            <td><input type="number" class="qty-input" value="${itemData ? itemData.qty : 1}" min="1" oninput="app.calculateTotals()"></td>
+            <td><input type="number" class="qty-input" value="${itemData ? Math.round(itemData.qty) : 1}" min="1" step="1" oninput="app.calculateTotals()"></td>
             <td><input type="number" class="price-input" value="${itemData ? itemData.price : 0}" step="0.01" oninput="app.calculateTotals()"></td>
             <td class="text-right row-total" style="padding-right:1.5rem;">L. 0.00</td>
             <td><button class="btn-icon text-error-color" onclick="this.closest('tr').remove(); app.calculateTotals();"><i data-lucide="trash-2" style="width:16px;"></i></button></td>
