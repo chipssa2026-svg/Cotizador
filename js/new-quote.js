@@ -67,6 +67,14 @@ window.Views['new-quote'] = (d) => {
                     </div>
                 </div>
 
+                <div class="mt-3">
+                    <label>Tipo de Cotización</label>
+                    <select id="quote-tipo" onchange="app.calculateTotals()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
+                        <option value="Nacional">🇭🇳 Nacional (ISV 15%)</option>
+                        <option value="Extranjera">🌎 Extranjera (Sin ISV)</option>
+                    </select>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mt-3">
                     <div>
                         <label>Moneda</label>
@@ -88,7 +96,7 @@ window.Views['new-quote'] = (d) => {
             </div>
             <div class="totals-area mt-4 p-3" style="border-radius:10px; background:var(--bg-color); border:1px solid var(--border-color); color:var(--text-main);">
                 <div class="flex-between"><span>Subtotal:</span><span id="sub-total">L. 0.00</span></div>
-                <div class="flex-between"><span>ISV (15%):</span><span id="isv-total">L. 0.00</span></div>
+                <div class="flex-between"><span id="isv-label">ISV (15%):</span><span id="isv-total">L. 0.00</span></div>
                 <div class="flex-between h4 mt-2"><span>Total:</span><span id="total-val" class="text-primary-color">L. 0.00</span></div>
             </div>
             <button class="btn btn-primary w-100 mt-4 py-3" onclick="app.saveFinalQuote()" style="font-size:1.1rem; font-weight:600;">Guardar y Ver Cotización</button>

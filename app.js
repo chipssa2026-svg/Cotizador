@@ -234,6 +234,7 @@ window.app = {
                 email: get(['correo', 'email', 'email_cliente']) || '',
                 currency: get(['moneda', 'currency']) || 'LPS',
                 exchangeRate: parseFloat(get(['tasa', 'rate', 'cambio'])) || 1,
+                tipo: get(['tipo', 'type']) || 'Nacional',
                 subtotal: parseFloat(get(['subtotal', 'sub'])) || 0,
                 isv: parseFloat(get(['isv', 'impuesto'])) || 0,
                 notes: notes,
@@ -315,7 +316,8 @@ window.app = {
                 "Telefono": q.phones || "",
                 "Correo": q.email || "",
                 "Moneda": q.currency || "LPS",
-                "TasaCambio": q.exchangeRate || 1
+                "TasaCambio": q.exchangeRate || 1,
+                "Tipo": q.tipo || "Nacional"
             }));
         }
 
@@ -993,6 +995,7 @@ window.app = {
         let subtotal = 0;
         const currency = document.getElementById('quote-currency') ? document.getElementById('quote-currency').value : 'LPS';
         const symbol = currency === 'USD' ? '$ ' : 'L. ';
+        const tipo = document.getElementById('quote-tipo') ? document.getElementById('quote-tipo').value : 'Nacional';
 
         document.querySelectorAll('#quote-items-body tr').forEach(tr => {
             const qty = this.parseNum(tr.querySelector('.qty-input').value);
@@ -1000,7 +1003,9 @@ window.app = {
             const total = qty * price; subtotal += total;
             tr.querySelector('.row-total').innerText = symbol + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         });
-        const isv = subtotal * 0.15;
+        const isv = tipo === 'Nacional' ? subtotal * 0.15 : 0;
+        const isvLabel = document.getElementById('isv-label');
+        if (isvLabel) isvLabel.innerText = tipo === 'Nacional' ? 'ISV (15%):' : 'ISV (Exento):';
         document.getElementById('sub-total').innerText = symbol + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('isv-total').innerText = symbol + isv.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         document.getElementById('total-val').innerText = symbol + (subtotal + isv).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1334,6 +1339,7 @@ window.app = {
         const dueDate = document.getElementById('quote-due-date').value;
         const paymentCondition = document.getElementById('quote-payment-condition').value;
         const currency = document.getElementById('quote-currency').value;
+        const tipo = document.getElementById('quote-tipo') ? document.getElementById('quote-tipo').value : 'Nacional';
         const exchangeRate = currency === 'LPS' ? 1 : (parseFloat(document.getElementById('quote-exchange-rate').value) || 1);
         const plazo = parseInt(document.getElementById('quote-plazo').value) || 0;
         const notes = document.getElementById('quote-notes').value;
@@ -1361,7 +1367,7 @@ window.app = {
         if (items.length === 0) return this.notify('Agregue al menos un producto', 'error');
 
         const subtotal = items.reduce((a, b) => a + b.total, 0);
-        const isv = subtotal * 0.15;
+        const isv = tipo === 'Nacional' ? subtotal * 0.15 : 0;
         const total = subtotal + isv;
 
         // Búsqueda robusta del cliente para no perder código ni teléfono
@@ -1395,6 +1401,7 @@ window.app = {
             plazo,
             currency,
             exchangeRate,
+            tipo,
             facturada: false
         };
 
@@ -1479,6 +1486,9 @@ window.app = {
         }
         const rateInput = document.getElementById('quote-exchange-rate');
         if (rateInput) rateInput.value = quote.exchangeRate || '';
+
+        const tipoSelect = document.getElementById('quote-tipo');
+        if (tipoSelect) tipoSelect.value = quote.tipo || 'Nacional';
         
         const condSelect = document.getElementById('quote-payment-condition');
         if (condSelect) {

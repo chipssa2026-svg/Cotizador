@@ -66,6 +66,10 @@ window.Views.preview = (q) => `
                     <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Moneda:</strong>
                     <span>${q.currency === 'USD' ? 'Dólares (USD)' : 'Lempiras (LPS)'}</span>
                 </div>
+                <div style="display:flex; justify-content: space-between; gap: 10px;">
+                    <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Tipo:</strong>
+                    <span>${q.tipo || 'Nacional'}</span>
+                </div>
             </div>
         </div>
 
@@ -114,12 +118,17 @@ window.Views.preview = (q) => `
             <div style="width: 250px;">
                 <div style="display:flex; justify-content:space-between; padding: 4px 0; font-size: 0.85rem; color: #475569;">
                     <span>Subtotal</span>
-                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${(Number(q.total || 0) / 1.15).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${Number(q.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                ${(q.tipo || 'Nacional') === 'Nacional' ? `
                 <div style="display:flex; justify-content:space-between; padding: 4px 0; font-size: 0.85rem; color: #475569;">
                     <span>ISV 15%</span>
-                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${(Number(q.total || 0) - (Number(q.total || 0) / 1.15)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
+                    <span>${q.currency === 'USD' ? '$ ' : 'L. '}${Number(q.isv || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>` : `
+                <div style="display:flex; justify-content:space-between; padding: 4px 0; font-size: 0.85rem; color: #64748b; font-style: italic;">
+                    <span>ISV</span>
+                    <span>Exento</span>
+                </div>`}
                 <div style="display:flex; justify-content:space-between; padding: 8px 0; border-top: 2px solid #22c55e; margin-top: 3px; font-size: 1.1rem;">
                     <strong style="color: #1e293b;">TOTAL</strong>
                     <strong style="color: #22c55e;">${q.currency === 'USD' ? '$ ' : 'L. '}${Number(q.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
