@@ -1693,19 +1693,26 @@ window.app = {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(worksheet);
 
-            // Filtrar clientes válidos (soporta RazonSocial, Cliente, Nombre, Correo)
-            this.data.clientes = rows.filter(r => r.RazonSocial || r.Cliente || r.RAZON_SOCIAL || r.Nombre || r.NOMBRE).map(r => ({
-                id: clean(r, ['Cliente', 'cliente', 'Codigo', 'codigo', 'ID', 'ID_CLIENTE']),
-                razonSocial: getVal(r, ['razon', 'social', 'nombre', 'RazonSocial', 'RAZON_SOCIAL', 'NOMBRE']),
-                nombreComercial: getVal(r, ['comercial', 'nombre', 'NombreComercial', 'Nombre_Comercial']),
-                rtn: this.formatRTN(getVal(r, ['RTN', 'rtn', 'fiscal', 'RTN_CLIENTE'])),
-                address: getVal(r, ['direccion', 'address', 'Direccion', 'DIRECCION', 'UBICACION']),
-                phones: getVal(r, ['telefono', 'phone', 'Telefonos', 'TELEFONOS', 'CELULAR']),
-                email: getVal(r, ['correo', 'email', 'Correo', 'CORREO', 'MAIL'])
-            }));
+            // Helper local: busca el valor de un campo buscando coincidencia parcial en el nombre de columna
+            const getVal = (obj, words) => {
+                const k = Object.keys(obj).find(key =>
+                    words.some(w => key.toLowerCase().includes(w.toLowerCase()))
+                );
+                return k ? obj[k] : '';
+            };
+
+            this.data.clientes = rows.map(r => ({
+                id: this.cleanCode(String(getVal(r, ['cliente', 'codigo', 'id']) || '').replace(/^0+/, '') || '0'),
+                razonSocial: getVal(r, ['razonsocial', 'razon', 'social', 'nombre']),
+                nombreComercial: getVal(r, ['nombrecomercial', 'comercial', 'fantasia']),
+                rtn: this.formatRTN(getVal(r, ['idtributario', 'rtn', 'fiscal', 'nrc', 'tributario'])),
+                address: getVal(r, ['direccion', 'address', 'ubicacion']),
+                phones: getVal(r, ['telefonos', 'telefono', 'phone', 'celular']),
+                email: getVal(r, ['correo', 'email', 'mail'])
+            })).filter(c => c.id !== '0' || c.razonSocial); // Descartar solo filas completamente vacías
 
             this.data.lastCustomerImport = this.getAppTimestamp();
-            await this.saveDB('customers'); // Sincronización ligera
+            await this.saveDB('customers');
             this.render('customers');
             this.notify(`¡${this.data.clientes.length} clientes importados con éxito!`);
         };
