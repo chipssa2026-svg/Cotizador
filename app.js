@@ -271,11 +271,21 @@ window.app = {
         }));
 
         this.data.usuarios = data.usuarios || data.users || [];
-        this.data.config = data.config || { nextNumber: 859 };
+        
+        // Normalización de Configuración (evitar que se pierda el correlativo)
+        const rawConfig = data.config || {};
+        const configObj = Array.isArray(rawConfig) ? rawConfig[0] : rawConfig;
+        
+        this.data.config = {
+            nextNumber: parseInt(getVal(configObj, ['proxima', 'number', 'next'])) || 859,
+            lastProductImport: getVal(configObj, ['productimport', 'productos_fecha']),
+            lastCustomerImport: getVal(configObj, ['customerimport', 'clientes_fecha']),
+            lastSellerImport: getVal(configObj, ['sellerimport', 'vendedores_fecha'])
+        };
 
-        this.data.lastProductImport = conf.lastProductImport || data.lastProductImport || null;
-        this.data.lastCustomerImport = conf.lastCustomerImport || data.lastCustomerImport || null;
-        this.data.lastSellerImport = conf.lastSellerImport || data.lastSellerImport || null;
+        this.data.lastProductImport = this.data.config.lastProductImport || data.lastProductImport || null;
+        this.data.lastCustomerImport = this.data.config.lastCustomerImport || data.lastCustomerImport || null;
+        this.data.lastSellerImport = this.data.config.lastSellerImport || data.lastSellerImport || null;
     },
 
     async saveDB(tableKey = null) {
@@ -1408,7 +1418,7 @@ window.app = {
         return `SON: ${result.trim()} ${label} CON ${decPart.toString().padStart(2, '0')}/100`;
     },
 
-    saveFinalQuote() {
+    async saveFinalQuote() {
         const customer = document.getElementById('quote-customer').value;
         const rtn = this.formatRTN(document.getElementById('quote-rtn').value);
         const address = document.getElementById('quote-address').value;
@@ -1461,36 +1471,56 @@ window.app = {
 
         const customerCode = clientObj ? clientObj.id : '';
 
-        const q = {
-            id: Date.now(),
-            number: String(this.data.config.nextNumber++),
-            customerName: customer,
-            customerCode,
-            sucursal: selectedBranch,
-            rtn,
-            address,
-            phones: phone,
-            email,
-            seller,
-            date: this.getLocalDate(),
-            dueDate,
-            items,
-            total: parseFloat(total.toFixed(2)),
-            subtotal: parseFloat(subtotal.toFixed(2)),
-            isv: parseFloat(isv.toFixed(2)),
-            notes,
-            paymentCondition,
-            plazo,
-            currency,
-            exchangeRate,
-            tipo,
-            facturada: false
-        };
+        // --- PREVENCIÓN DE COLISIONES Y SOBREESCRITURA ---
+        this.notify('Sincronizando con la nube antes de guardar...', 'info');
+        
+        try {
+            await this.loadDB(); // Traer versión más reciente de la nube
+            
+            // Determinar el siguiente número basado en el máximo real en la lista de la nube
+            const maxReal = this.data.cotizaciones.reduce((max, c) => Math.max(max, parseInt(c.number) || 0), 0);
+            const nextSafeNumber = Math.max(maxReal + 1, this.data.config.nextNumber);
+            
+            const q = {
+                id: Date.now(),
+                number: String(nextSafeNumber),
+                customerName: customer,
+                customerCode,
+                sucursal: selectedBranch,
+                rtn,
+                address,
+                phones: phone,
+                email,
+                seller,
+                date: this.getLocalDate(),
+                dueDate,
+                items,
+                total: parseFloat(total.toFixed(2)),
+                subtotal: parseFloat(subtotal.toFixed(2)),
+                isv: parseFloat(isv.toFixed(2)),
+                notes,
+                paymentCondition,
+                plazo,
+                currency,
+                exchangeRate,
+                tipo,
+                facturada: false
+            };
 
-        this.data.cotizaciones.unshift(q);
-        this.saveDB();
-        this.render('preview', q);
-        this.notify(`Cotización #${q.number} guardada correctamente`);
+            // Avanzar el correlativo para el siguiente guardado
+            this.data.config.nextNumber = nextSafeNumber + 1;
+
+            // Al hacer unshift aquí sobre la data recién cargada, evitamos perder los cambios de otros usuarios
+            this.data.cotizaciones.unshift(q);
+            
+            this.saveDB();
+            this.render('preview', q);
+            this.notify(`Cotización #${q.number} guardada correctamente`);
+
+        } catch (err) {
+            console.error("Falla en sincronización pre-guardado:", err);
+            this.notify("Error de red al sincronizar. Intente grabar de nuevo.", "error");
+        }
     },
 
     previewQuote(id) {
