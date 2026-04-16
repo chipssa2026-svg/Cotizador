@@ -10,8 +10,14 @@ window.Views['new-quote'] = (d) => {
     const sellers = d.vendedores || [];
     const prodList = (p || []).map(x => `<option value="${x.code} - ${x.description}">`).join('');
     
-    // Buscador Global: ID | Razón | Comercial | RTN
-    const custList = (customers || []).map(c => {
+    const branches = [...new Set(customers.map(c => c.sucursal).filter(s => s))].sort();
+    const branchOptions = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+
+    // Filtrar clientes por la primera sucursal por defecto para mantener consistencia
+    const defaultBranch = branches[0] || '';
+    const filteredInitial = defaultBranch ? customers.filter(c => c.sucursal === defaultBranch) : (customers || []);
+
+    const custList = filteredInitial.map(c => {
         const label = `${c.id} | ${c.razonSocial}${c.nombreComercial ? ' | ' + c.nombreComercial : ''}${c.rtn ? ' | ' + c.rtn : ''}`;
         return `<option value="${label}">`;
     }).join('');
@@ -43,7 +49,19 @@ window.Views['new-quote'] = (d) => {
         <div class="card glass">
             <h3>Información de Cotización</h3>
             <div class="customer-inputs mt-3">
-                <div class="mb-3"><label>Cliente</label><input type="text" id="quote-customer" placeholder="Nombre del cliente..." list="customers-datalist" onchange="app.onCustomerSelect(this)"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mb-3">
+                    <div>
+                        <label>Seleccionar Sucursal</label>
+                        <select id="quote-branch" onchange="app.filterCustomersByBranch(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
+                            ${branchOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label>Cliente</label>
+                        <input type="text" id="quote-customer" placeholder="Nombre del cliente..." list="customers-datalist" onchange="app.onCustomerSelect(this)">
+                    </div>
+                </div>
+
                 <div class="mb-3"><label>RTN / ID</label><input type="text" id="quote-rtn" placeholder="RTN del cliente..."></div>
                 <div class="mb-3"><label>Dirección</label><input type="text" id="quote-address" placeholder="Dirección del cliente..."></div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mb-3">

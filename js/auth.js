@@ -15,6 +15,11 @@ window.Views.login = () => {
                 <h1 style="color:white; font-family:'Outfit'; font-size:2.2rem; margin:0; letter-spacing:-1px; font-weight:800;">Cotizador<span style="color:#22c55e">PRO</span></h1>
             </div>
             
+            <div id="login-error" class="hidden" style="margin-bottom:20px; padding:12px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; color:#fca5a5; font-size:0.85rem; text-align:center; display:flex; align-items:center; gap:8px; justify-content:center;">
+                <i data-lucide="alert-circle" style="width:16px;"></i>
+                <span>Credenciales incorrectas</span>
+            </div>
+
             <form id="login-form" onsubmit="window.app.handleLogin(event)" style="display:flex; flex-direction:column; gap:24px;">
                 <div class="form-group-login">
                     <label style="display:block; color:rgba(255,255,255,0.7); font-size:0.75rem; margin-bottom:10px; letter-spacing:1.5px; font-weight:700; text-transform:uppercase;">Usuario</label>

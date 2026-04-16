@@ -56,6 +56,9 @@ window.app = {
         const userVal = document.getElementById('login-user').value.trim();
         const passVal = document.getElementById('login-pass').value;
         const btn = document.getElementById('login-btn');
+        const errorMsg = document.getElementById('login-error');
+
+        if (errorMsg) errorMsg.classList.add('hidden');
 
         if (btn) {
             btn.disabled = true;
@@ -91,7 +94,13 @@ window.app = {
         }
 
         // Error de Login
-        this.notify('Credenciales incorrectas', 'error');
+        if (errorMsg) {
+            errorMsg.classList.remove('hidden');
+            lucide.createIcons();
+        } else {
+            this.notify('Credenciales incorrectas', 'error');
+        }
+
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = `<span>INICIAR SESIÓN</span><i data-lucide="arrow-right"></i>`;
@@ -951,9 +960,15 @@ window.app = {
         const val = el.value;
         if (!val) return;
         const parts = val.split('|').map(s => s.trim());
+        const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : null;
+
         if (parts.length >= 2) {
             const id = parts[0];
-            const customer = this.data.clientes.find(c => String(c.id) === id);
+            // Buscar combinando ID y Sucursal para evitar colisiones entre sucursales
+            const customer = this.data.clientes.find(c => 
+                String(c.id) === id && (!selectedBranch || c.sucursal === selectedBranch)
+            );
+            
             if (customer) {
                 // Rellenar campos individuales
                 document.getElementById('quote-customer').value = customer.razonSocial;
@@ -965,6 +980,22 @@ window.app = {
                 if (phoneInput) phoneInput.value = customer.phones || '';
             }
         }
+    },
+    filterCustomersByBranch(branch) {
+        const datalist = document.getElementById('customers-datalist');
+        const customerInput = document.getElementById('quote-customer');
+        if (!datalist) return;
+        
+        // Limpiar el input del cliente al cambiar de sucursal para evitar inconsistencias
+        if (customerInput) customerInput.value = '';
+        
+        const customers = this.data.clientes;
+        const filtered = branch ? customers.filter(c => c.sucursal === branch) : customers;
+        
+        datalist.innerHTML = filtered.map(c => {
+            const label = `${c.id} | ${c.razonSocial}${c.nombreComercial ? ' | ' + c.nombreComercial : ''}${c.rtn ? ' | ' + c.rtn : ''}`;
+            return `<option value="${label}">`;
+        }).join('');
     },
     onProductSelect(i) {
         const p = this.data.productos.find(x => String(x.code) === i.value.split(' - ')[0]);
@@ -1377,9 +1408,12 @@ window.app = {
 
         // Búsqueda robusta del cliente para no perder código ni teléfono
         const customerClean = customer.trim().toLowerCase();
+        const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : '';
+
         const clientObj = this.data.clientes.find(c =>
-            (c.razonSocial || '').toLowerCase().trim() === customerClean ||
-            (c.nombreComercial || '').toLowerCase().trim() === customerClean
+            ((c.razonSocial || '').toLowerCase().trim() === customerClean ||
+            (c.nombreComercial || '').toLowerCase().trim() === customerClean) &&
+            (!selectedBranch || c.sucursal === selectedBranch)
         );
 
         const customerCode = clientObj ? clientObj.id : '';
@@ -1998,11 +2032,11 @@ window.app = {
             pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.4);
             pdf.line(mg, y + 8, W - mg, y + 8);
             pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(30, 41, 59);
-            pdf.text('CODIGO',      colCode,  y + 5.5);
-            pdf.text('DESCRIPCION', colDesc,  y + 5.5);
-            pdf.text('CANT.',       colQty,   y + 5.5, { align: 'right' });
-            pdf.text('PRECIO',      colPrc,   y + 5.5, { align: 'right' });
-            pdf.text('IMPORTE',     colImp,   y + 5.5, { align: 'right' });
+            pdf.text('CODIGO', colCode, y + 5.5);
+            pdf.text('DESCRIPCION', colDesc, y + 5.5);
+            pdf.text('CANT.', colQty, y + 5.5, { align: 'right' });
+            pdf.text('PRECIO', colPrc, y + 5.5, { align: 'right' });
+            pdf.text('IMPORTE', colImp, y + 5.5, { align: 'right' });
             y += 9; pdf.setLineWidth(0.2);
             pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5);
             (q.items || []).forEach((item, i) => {
@@ -2010,17 +2044,17 @@ window.app = {
                 if (i % 2 === 0) { pdf.setFillColor(248, 250, 252); pdf.rect(mg, y - 1, W - 2 * mg, rowH, 'F'); }
                 pdf.setDrawColor(241, 245, 249); pdf.line(mg, y + rowH - 1, W - mg, y + rowH - 1);
                 pdf.setTextColor(30, 41, 59);
-                const qty   = Number(item.qty   || 0);
+                const qty = Number(item.qty || 0);
                 const price = Number(item.price || 0);
                 const total = Number(item.total || qty * price);
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(String(item.code || '').substring(0, 9),         colCode, y + 5);
+                pdf.text(String(item.code || '').substring(0, 9), colCode, y + 5);
                 pdf.setFont('helvetica', 'normal');
                 pdf.text(String(item.description || '').substring(0, 58), colDesc, y + 5);
-                pdf.text(Math.round(qty).toLocaleString('en-US'),         colQty,  y + 5, { align: 'right' });
-                pdf.text(symSp + fmt(price),                              colPrc,  y + 5, { align: 'right' });
+                pdf.text(Math.round(qty).toLocaleString('en-US'), colQty, y + 5, { align: 'right' });
+                pdf.text(symSp + fmt(price), colPrc, y + 5, { align: 'right' });
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(symSp + fmt(total),                              colImp,  y + 5, { align: 'right' });
+                pdf.text(symSp + fmt(total), colImp, y + 5, { align: 'right' });
                 pdf.setFont('helvetica', 'normal');
                 y += rowH;
             });
@@ -2068,9 +2102,9 @@ window.app = {
             pdf.setDrawColor(226, 232, 240); pdf.setLineWidth(0.3);
             pdf.line(mg, footerY, W - mg, footerY);
             pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 116, 139);
-            pdf.text('PBX: (504) 2544-0212', mg + 20,  footerY + 5, { align: 'center' });
-            pdf.text('www.chipssa.net',       mg + 93,  footerY + 5, { align: 'center' });
-            pdf.text('ventas@chipssa.net',    mg + 166, footerY + 5, { align: 'center' });
+            pdf.text('PBX: (504) 2544-0212', mg + 20, footerY + 5, { align: 'center' });
+            pdf.text('www.chipssa.net', mg + 93, footerY + 5, { align: 'center' });
+            pdf.text('ventas@chipssa.net', mg + 166, footerY + 5, { align: 'center' });
             pdf.setFontSize(6); pdf.setTextColor(148, 163, 184);
             pdf.text('Pagina 1 de 1', W / 2, footerY + 9, { align: 'center' });
 
