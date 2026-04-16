@@ -82,6 +82,10 @@ window.Views.preview = (q) => `
                     <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Tipo:</strong>
                     <span>${q.tipo || 'Nacional'}</span>
                 </div>
+                <div style="display:flex; justify-content: space-between; gap: 10px;">
+                    <strong style="color:#64748b; text-transform:uppercase; font-size: 0.65rem;">Sucursal:</strong>
+                    <span>${q.sucursal || '---'}</span>
+                </div>
             </div>
         </div>
 

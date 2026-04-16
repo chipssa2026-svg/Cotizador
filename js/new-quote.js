@@ -42,7 +42,7 @@ window.Views['new-quote'] = (d) => {
         <div class="card glass">
             <div class="flex-between mb-4"><h3>Productos</h3><button class="btn btn-secondary btn-sm" onclick="app.addQuoteItem()"> + Fila</button></div>
             <table class="minimal-table">
-                <thead><tr><th style="width:45%">Producto</th><th style="width:10%">Cant.</th><th style="width:20%">Precio</th><th class="text-right" style="width:140px; padding-right:1.5rem;">Total</th><th style="width:40px;"></th></tr></thead>
+                <thead><tr><th style="width:40%">Producto</th><th style="width:15%">Cant.</th><th style="width:20%">Precio</th><th class="text-right" style="width:140px; padding-right:1.5rem;">Total</th><th style="width:40px;"></th></tr></thead>
                 <tbody id="quote-items-body"></tbody>
             </table>
         </div>

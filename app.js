@@ -1455,8 +1455,12 @@ window.app = {
     previewQuote(id) {
         const q = this.data.cotizaciones.find(x => String(x.id) === String(id));
         if (q && q.customerCode) {
-            // Sincronización dinámica: Usar el código para traer el RTN más reciente del catálogo
-            const client = this.data.clientes.find(c => String(c.id) === String(q.customerCode));
+            // Sincronización dinámica: Usar código + sucursal para traer los datos correctos del catálogo
+            const client = this.data.clientes.find(c => 
+                String(c.id) === String(q.customerCode) && 
+                (!q.sucursal || c.sucursal === q.sucursal)
+            );
+            
             if (client) {
                 q.rtn = client.rtn || q.rtn;
                 q.address = client.address || q.address;
