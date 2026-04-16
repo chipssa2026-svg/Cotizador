@@ -1142,6 +1142,47 @@ window.app = {
             });
         }
 
+        // --- Gráfica de Sucursales ---
+        const ctxBranch = document.getElementById('branchPerformanceChart');
+        if (ctxBranch) {
+            if (window.myChart5) window.myChart5.destroy();
+
+            const branchData = {};
+            quotes.forEach(q => {
+                const b = q.sucursal || 'Otras/Sin Asignar';
+                if (!branchData[b]) branchData[b] = { count: 0, value: 0 };
+                branchData[b].count++;
+                if (q.currency === 'USD') {
+                    branchData[b].value += (q.total * (q.exchangeRate || 1));
+                } else {
+                    branchData[b].value += q.total;
+                }
+            });
+
+            const bLabels = Object.keys(branchData).sort();
+            const bCounts = bLabels.map(l => branchData[l].count);
+            const bValues = bLabels.map(l => branchData[l].value);
+
+            window.myChart5 = new Chart(ctxBranch, {
+                type: 'bar',
+                data: {
+                    labels: bLabels,
+                    datasets: [
+                        { label: 'Cant. Cotizaciones', data: bCounts, backgroundColor: 'rgba(99, 102, 241, 0.6)', yAxisID: 'y' },
+                        { label: 'Valor Consolidado (LPS)', data: bValues, backgroundColor: 'rgba(236, 72, 153, 0.6)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Cantidad' } },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Monto Total (LPS)' } }
+                    }
+                }
+            });
+        }
+
         // --- Gráfica de Productos (Top 10) ---
         const ctxProd = document.getElementById('productPerformanceChart');
         if (ctxProd) {

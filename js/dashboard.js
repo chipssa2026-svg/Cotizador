@@ -103,7 +103,11 @@ window.Views.dashboard = (d) => {
         </div>
     </div>
 
-    <div style="margin-bottom: 2rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="card glass">
+            <h3 style="margin-bottom:1rem;">Cotizaciones por Sucursal (Cant. y Valor)</h3>
+            <div style="height: 350px; width: 100%;"><canvas id="branchPerformanceChart"></canvas></div>
+        </div>
         <div class="card glass">
             <h3 style="margin-bottom:1rem;">Desempeño por Vendedores (Cant. y Valor)</h3>
             <div style="height: 350px; width: 100%;"><canvas id="sellerPerformanceChart"></canvas></div>
