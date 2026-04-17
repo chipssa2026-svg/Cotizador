@@ -646,6 +646,21 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 768px) {
   .quote-form-grid { grid-template-columns: 1fr; }
 }
+
+/* Filas de formulario alineadas y responsivas */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: flex-end; /* Alinea los inputs al fondo si las etiquetas tienen distinto alto */
+}
+
+@media (max-width: 580px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
 /* Modales Premium Centrados */
 #modal-container {
     position: fixed;

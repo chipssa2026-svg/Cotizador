@@ -49,7 +49,7 @@ window.Views['new-quote'] = (d) => {
         <div class="card glass">
             <h3>Información de Cotización</h3>
             <div class="customer-inputs mt-3">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mb-3">
+                <div class="form-row mb-3">
                     <div>
                         <label>Seleccionar Sucursal</label>
                         <select id="quote-branch" onchange="app.filterCustomersByBranch(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
@@ -64,17 +64,17 @@ window.Views['new-quote'] = (d) => {
 
                 <div class="mb-3"><label>RTN / ID</label><input type="text" id="quote-rtn" placeholder="RTN del cliente..."></div>
                 <div class="mb-3"><label>Dirección</label><input type="text" id="quote-address" placeholder="Dirección del cliente..."></div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mb-3">
+                <div class="form-row mb-3">
                     <div><label>Correo Electrónico</label><input type="email" id="quote-email" placeholder="correo@ejemplo.com"></div>
                     <div><label>Teléfono</label><input type="text" id="quote-phone" placeholder="Teléfono..."></div>
                 </div>
                 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-row">
                     <div><label>Vencimiento</label><input type="date" id="quote-due-date" value="${window.app.getLocalDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))}"></div>
                     <div><label>Vendedor</label><input type="text" id="quote-vendedor" placeholder="Nombre..." list="sellers-datalist"></div>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mt-3">
+                <div class="form-row mt-3">
                     <div>
                         <label>Condición de Pago</label>
                         <select id="quote-payment-condition" onchange="app.togglePlazoField(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
@@ -96,7 +96,7 @@ window.Views['new-quote'] = (d) => {
                     </select>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" class="mt-3">
+                <div class="form-row mt-3">
                     <div>
                         <label>Moneda</label>
                         <select id="quote-currency" onchange="app.toggleCurrencyField(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main); font-family:inherit;">
