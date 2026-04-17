@@ -1879,6 +1879,18 @@ window.app = {
 
         let q = [...this.data.cotizaciones];
 
+        // Filtro de Seguridad por Rol Vendedor
+        const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
+        if (role === 'VENDEDOR') {
+            const sellerCode = this.data.currentUser.CodigoVendedor || this.data.currentUser.sellerCode;
+            const sellerObj = this.data.vendedores.find(v => String(v.id) === String(sellerCode));
+            if (sellerObj) {
+                q = q.filter(x => x.seller === sellerObj.name);
+            } else {
+                q = []; // Seguridad: Si no se encuentra el objeto vendedor, no mostrar nada
+            }
+        }
+
         if (query) {
             const low = query.toLowerCase();
             q = q.filter(x =>
@@ -1942,6 +1954,18 @@ window.app = {
 
         this.searchTimeout = setTimeout(() => {
             let q = [...this.data.cotizaciones];
+
+            // Filtro de Seguridad por Rol Vendedor
+            const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
+            if (role === 'VENDEDOR') {
+                const sellerCode = this.data.currentUser.CodigoVendedor || this.data.currentUser.sellerCode;
+                const sellerObj = this.data.vendedores.find(v => String(v.id) === String(sellerCode));
+                if (sellerObj) {
+                    q = q.filter(x => x.seller === sellerObj.name);
+                } else {
+                    q = [];
+                }
+            }
 
             if (query) {
                 const low = query.toLowerCase();
