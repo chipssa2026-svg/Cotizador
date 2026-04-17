@@ -26,9 +26,10 @@ window.Views.dashboard = (d) => {
                 <div style="display:flex; gap:5px; justify-content:center;">
                     <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${q.id}')" title="Ver/Imprimir">Ver</button>
                     ${!q.anulada ? `
+                    ${['ADMINISTRADOR', 'GERENCIA', 'ASISTENTE DE GERENCIA', 'FACTURACION', 'VENDEDOR'].includes((window.app.data.currentUser.Rol || '').toUpperCase()) ? `
                     <button class="btn btn-sm ${q.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${q.id}')" title="Marcar como Facturada">
                         <i data-lucide="${q.facturada ? 'check-square' : 'file-check'}"></i>
-                    </button>
+                    </button>` : ''}
                     <button class="btn btn-sm" style="background:#ef4444; color:white;" onclick="window.app.toggleAnular('${q.id}')" title="Anular">
                         <i data-lucide="ban"></i>
                     </button>` : ''}

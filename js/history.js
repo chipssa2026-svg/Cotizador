@@ -20,7 +20,7 @@ window.Views.history = (q, f = {}, sellers = []) => {
                 <div style="display:flex; gap:5px; justify-content:center;">
                     <button class="btn btn-secondary btn-sm" onclick="window.app.previewQuote('${x.id || ''}')" title="Ver/Imprimir">Ver</button>
                     ${!x.anulada ? `
-                    ${['ADMINISTRADOR', 'GERENCIA', 'ASISTENTE DE GERENCIA', 'FACTURACION'].includes((window.app.data.currentUser.Rol || '').toUpperCase()) ? `
+                    ${['ADMINISTRADOR', 'GERENCIA', 'ASISTENTE DE GERENCIA', 'FACTURACION', 'VENDEDOR'].includes((window.app.data.currentUser.Rol || '').toUpperCase()) ? `
                     <button class="btn btn-sm ${x.facturada ? 'btn-primary' : 'btn-secondary'}" onclick="window.app.toggleFacturado('${x.id}')" title="Marcar como Facturada">
                         <i data-lucide="${x.facturada ? 'check-square' : 'file-check'}" style="width:14px;"></i>
                     </button>` : ''}
