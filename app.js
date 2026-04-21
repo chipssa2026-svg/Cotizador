@@ -327,6 +327,7 @@ window.app = {
                 "Total": q.total,
                 "Subtotal": q.subtotal || 0,
                 "ISV": q.isv || 0,
+                "Facturada": q.facturada ? "SI" : "NO",
                 "Anulada": q.anulada ? "SI" : "NO",
                 "AnuladaMotivo": q.anuladaMotivo || "",
                 "AnuladaPor": q.anuladaPor || "",
