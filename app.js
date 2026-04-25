@@ -1590,10 +1590,14 @@ window.app = {
 
         // Poblar encabezado
         document.getElementById('quote-customer').value = quote.customerName || '';
+        const branchSelect = document.getElementById('quote-branch');
+        if (branchSelect) branchSelect.value = quote.sucursal || '';
         document.getElementById('quote-rtn').value = quote.rtn || '';
         document.getElementById('quote-address').value = quote.address || '';
         const emailField = document.getElementById('quote-email');
         if (emailField) emailField.value = quote.email || '';
+        const phoneField = document.getElementById('quote-phone');
+        if (phoneField) phoneField.value = quote.phones || '';
         document.getElementById('quote-notes').value = quote.notes || '';
 
         const currSelect = document.getElementById('quote-currency');
