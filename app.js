@@ -971,7 +971,14 @@ window.app = {
     },
     onCustomerSelect(el) {
         const val = el.value;
-        if (!val) return;
+        if (!val) {
+            el.removeAttribute('data-selected-code');
+            return;
+        }
+
+        // Limpiar el código previamente seleccionado para evitar inconsistencias si editan a mano
+        el.removeAttribute('data-selected-code');
+
         const parts = val.split('|').map(s => s.trim());
         const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : null;
 
@@ -983,8 +990,11 @@ window.app = {
             );
             
             if (customer) {
+                // Guardar el código específico seleccionado en un atributo de datos
+                el.setAttribute('data-selected-code', customer.id);
+
                 // Rellenar campos individuales
-                document.getElementById('quote-customer').value = customer.razonSocial;
+                el.value = customer.razonSocial;
                 document.getElementById('quote-rtn').value = this.formatRTN(customer.rtn || '');
                 document.getElementById('quote-address').value = customer.address || '';
                 const emailInput = document.getElementById('quote-email');
@@ -1000,7 +1010,10 @@ window.app = {
         if (!datalist) return;
         
         // Limpiar el input del cliente al cambiar de sucursal para evitar inconsistencias
-        if (customerInput) customerInput.value = '';
+        if (customerInput) {
+            customerInput.value = '';
+            customerInput.removeAttribute('data-selected-code');
+        }
         
         const customers = this.data.clientes;
         const filtered = branch ? customers.filter(c => c.sucursal === branch) : customers;
@@ -1461,16 +1474,23 @@ window.app = {
         const total = subtotal + isv;
 
         // Búsqueda robusta del cliente para no perder código ni teléfono
-        const customerClean = customer.trim().toLowerCase();
-        const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : '';
-
-        const clientObj = this.data.clientes.find(c =>
-            ((c.razonSocial || '').toLowerCase().trim() === customerClean ||
-            (c.nombreComercial || '').toLowerCase().trim() === customerClean) &&
-            (!selectedBranch || c.sucursal === selectedBranch)
-        );
-
-        const customerCode = clientObj ? clientObj.id : '';
+        const customerInput = document.getElementById('quote-customer');
+        const selectedCode = customerInput ? customerInput.getAttribute('data-selected-code') : '';
+        
+        let customerCode = '';
+        if (selectedCode) {
+            customerCode = selectedCode;
+        } else {
+            // Fallback en caso de edición manual o que no se dispare onchange
+            const customerClean = customer.trim().toLowerCase();
+            const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : '';
+            const clientObj = this.data.clientes.find(c =>
+                ((c.razonSocial || '').toLowerCase().trim() === customerClean ||
+                (c.nombreComercial || '').toLowerCase().trim() === customerClean) &&
+                (!selectedBranch || c.sucursal === selectedBranch)
+            );
+            customerCode = clientObj ? clientObj.id : '';
+        }
 
         // --- PREVENCIÓN DE COLISIONES Y SOBREESCRITURA ---
         this.notify('Sincronizando con la nube antes de guardar...', 'info');
@@ -1589,7 +1609,15 @@ window.app = {
         document.getElementById('modal-container').classList.add('hidden');
 
         // Poblar encabezado
-        document.getElementById('quote-customer').value = quote.customerName || '';
+        const customerInput = document.getElementById('quote-customer');
+        if (customerInput) {
+            customerInput.value = quote.customerName || '';
+            if (quote.customerCode) {
+                customerInput.setAttribute('data-selected-code', quote.customerCode);
+            } else {
+                customerInput.removeAttribute('data-selected-code');
+            }
+        }
         const branchSelect = document.getElementById('quote-branch');
         if (branchSelect) branchSelect.value = quote.sucursal || '';
         document.getElementById('quote-rtn').value = quote.rtn || '';
