@@ -20,6 +20,7 @@ window.app = {
     lastMainView: 'dashboard',
     lastCurrency: 'LPS', // Rastro para conversiones instantáneas
     searchTimeout: null,
+    currentRecalledQuote: null,
 
     async init() {
         console.log("📡 App Initializing...");
@@ -147,8 +148,8 @@ window.app = {
             const data = JSON.parse(text);
             if (data) {
                 this.normalizeData(data);
-                // Solo renderizar si NO estamos en la pantalla de login para evitar parpadeos
-                if (this.currentView !== 'login') {
+                // Solo renderizar vistas pasivas. Evitar re-renderizar 'new-quote' o 'preview' durante la sincronización para no perder estado de edición ni inputs.
+                if (this.currentView !== 'login' && this.currentView !== 'new-quote' && this.currentView !== 'preview') {
                     this.render(this.currentView);
                 }
             }
@@ -526,6 +527,7 @@ window.app = {
             else if (view === 'sellers') dataForView = this.data.vendedores;
             else if (view === 'users') dataForView = this.data; // Pasamos todo el objeto data
             else if (view === 'new-quote') {
+                this.currentRecalledQuote = null;
                 dataForView = {
                     productos: this.data.productos,
                     clientes: this.data.clientes,
@@ -1432,7 +1434,7 @@ window.app = {
         return `SON: ${result.trim()} ${label} CON ${decPart.toString().padStart(2, '0')}/100`;
     },
 
-    async saveFinalQuote() {
+    async saveFinalQuote(isOverwrite = false) {
         const customer = document.getElementById('quote-customer').value;
         const rtn = this.formatRTN(document.getElementById('quote-rtn').value);
         const address = document.getElementById('quote-address').value;
@@ -1492,47 +1494,103 @@ window.app = {
             customerCode = clientObj ? clientObj.id : '';
         }
 
-        // --- PREVENCIÓN DE COLISIONES Y SOBREESCRITURA ---
+        const recalledQuote = this.currentRecalledQuote;
+
+        if (recalledQuote && !isOverwrite) {
+            this.showSaveDecisionModal();
+            return;
+        }
+
+        // Ocultar modal de decisión si está activo
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) modalContainer.classList.add('hidden');
+
+        // --- PREVENCIÓN DE COLISIONES Y SOBREESCRURTURA ---
         this.notify('Sincronizando con la nube antes de guardar...', 'info');
         
         try {
             await this.loadDB(); // Traer versión más reciente de la nube
             
-            // Determinar el siguiente número basado en el máximo real en la lista de la nube
-            const maxReal = this.data.cotizaciones.reduce((max, c) => Math.max(max, parseInt(c.number) || 0), 0);
-            const nextSafeNumber = Math.max(maxReal + 1, this.data.config.nextNumber);
-            
-            const q = {
-                id: Date.now(),
-                number: String(nextSafeNumber),
-                customerName: customer,
-                customerCode,
-                sucursal: selectedBranch,
-                rtn,
-                address,
-                phones: phone,
-                email,
-                seller,
-                date: this.getLocalDate(),
-                dueDate,
-                items,
-                total: parseFloat(total.toFixed(2)),
-                subtotal: parseFloat(subtotal.toFixed(2)),
-                isv: parseFloat(isv.toFixed(2)),
-                notes,
-                paymentCondition,
-                plazo,
-                currency,
-                exchangeRate,
-                tipo,
-                facturada: false
-            };
+            let q;
+            if (isOverwrite && recalledQuote) {
+                // Sobreescribir la cotización original
+                q = {
+                    id: recalledQuote.id,
+                    number: recalledQuote.number,
+                    customerName: customer,
+                    customerCode,
+                    sucursal: selectedBranch,
+                    rtn,
+                    address,
+                    phones: phone,
+                    email,
+                    seller,
+                    date: recalledQuote.date || this.getLocalDate(),
+                    dueDate,
+                    items,
+                    total: parseFloat(total.toFixed(2)),
+                    subtotal: parseFloat(subtotal.toFixed(2)),
+                    isv: parseFloat(isv.toFixed(2)),
+                    notes,
+                    paymentCondition,
+                    plazo,
+                    currency,
+                    exchangeRate,
+                    tipo,
+                    facturada: recalledQuote.facturada || false,
+                    anulada: recalledQuote.anulada || false,
+                    anuladaMotivo: recalledQuote.anuladaMotivo || "",
+                    anuladaPor: recalledQuote.anuladaPor || "",
+                    anuladaFecha: recalledQuote.anuladaFecha || ""
+                };
 
-            // Avanzar el correlativo para el siguiente guardado
-            this.data.config.nextNumber = nextSafeNumber + 1;
+                const index = this.data.cotizaciones.findIndex(x => String(x.id) === String(recalledQuote.id));
+                if (index !== -1) {
+                    this.data.cotizaciones[index] = q;
+                } else {
+                    this.data.cotizaciones.unshift(q);
+                }
+                
+                // Limpiar la cotización cargada después de guardar
+                this.currentRecalledQuote = null;
+            } else {
+                // Crear una nueva cotización
+                const maxReal = this.data.cotizaciones.reduce((max, c) => Math.max(max, parseInt(c.number) || 0), 0);
+                const nextSafeNumber = Math.max(maxReal + 1, this.data.config.nextNumber);
+                
+                q = {
+                    id: Date.now(),
+                    number: String(nextSafeNumber),
+                    customerName: customer,
+                    customerCode,
+                    sucursal: selectedBranch,
+                    rtn,
+                    address,
+                    phones: phone,
+                    email,
+                    seller,
+                    date: this.getLocalDate(),
+                    dueDate,
+                    items,
+                    total: parseFloat(total.toFixed(2)),
+                    subtotal: parseFloat(subtotal.toFixed(2)),
+                    isv: parseFloat(isv.toFixed(2)),
+                    notes,
+                    paymentCondition,
+                    plazo,
+                    currency,
+                    exchangeRate,
+                    tipo,
+                    facturada: false
+                };
 
-            // Al hacer unshift aquí sobre la data recién cargada, evitamos perder los cambios de otros usuarios
-            this.data.cotizaciones.unshift(q);
+                // Avanzar el correlativo para el siguiente guardado
+                this.data.config.nextNumber = nextSafeNumber + 1;
+                this.data.cotizaciones.unshift(q);
+                
+                // Limpiar referencia
+                this.currentRecalledQuote = null;
+            }
             
             this.saveDB();
             this.render('preview', q);
@@ -1542,6 +1600,33 @@ window.app = {
             console.error("Falla en sincronización pre-guardado:", err);
             this.notify("Error de red al sincronizar. Intente grabar de nuevo.", "error");
         }
+    },
+
+    showSaveDecisionModal() {
+        const modal = document.getElementById('modal-container');
+        const qNum = this.currentRecalledQuote.number;
+        modal.innerHTML = `
+            <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:35px; border-radius:24px; width:450px; text-align:center; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); color: var(--text-main);">
+                <div style="width:60px; height:60px; background:rgba(34, 197, 94, 0.1); color:var(--primary-color); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                    <i data-lucide="save" style="width:30px; height:30px;"></i>
+                </div>
+                <h3 style="margin-bottom:10px; color:var(--text-main);">Guardar Cotización</h3>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:25px;">Has modificado una cotización llamada (<b>#${qNum}</b>). ¿Cómo deseas guardar esta información?</p>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button class="btn btn-primary" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="window.app.saveFinalQuote(true)">
+                        <i data-lucide="edit-3" style="width:18px;"></i> Actualizar la Cotización Original (#${qNum})
+                    </button>
+                    <button class="btn btn-secondary" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px; border:1px solid var(--border-color);" onclick="window.app.currentRecalledQuote = null; window.app.saveFinalQuote(false)">
+                        <i data-lucide="file-plus" style="width:18px;"></i> Guardar como una Nueva Cotización
+                    </button>
+                    <button class="btn btn-outline" style="width:100%; display:flex; justify-content:center; align-items:center; border: 1px solid var(--border-color); margin-top:5px;" onclick="document.getElementById('modal-container').classList.add('hidden')">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+        lucide.createIcons();
     },
 
     previewQuote(id) {
@@ -1565,7 +1650,7 @@ window.app = {
     showRecallQuoteModal() {
         const modal = document.getElementById('modal-container');
         modal.innerHTML = `
-            <div class="modal glass animate-slide-up" style="background:var(--bg-card); padding:35px; border-radius:30px; width:500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: var(--text-main);">
+            <div class="modal glass animate-slide-up" style="background:var(--card-bg); padding:35px; border-radius:30px; width:500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: var(--text-main);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h3 style="margin:0; color:var(--text-main);">Llamar Cotización</h3>
                     <button class="btn-icon" style="color:var(--text-main);" onclick="document.getElementById('modal-container').classList.add('hidden')"><i data-lucide="x"></i></button>
@@ -1605,6 +1690,8 @@ window.app = {
         }
 
         if (!quote) return this.notify('Cotización no encontrada', 'error');
+
+        this.currentRecalledQuote = quote;
 
         document.getElementById('modal-container').classList.add('hidden');
 

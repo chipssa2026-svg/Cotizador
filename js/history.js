@@ -39,7 +39,7 @@ window.Views.history = (q, f = {}, sellers = []) => {
                 <div class="search-bar" style="width: 100%; margin: 0; position: relative;">
                     <i data-lucide="search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width:14px; color: var(--text-secondary);"></i>
                     <input type="text" id="hist-filter-q" placeholder="Escriba..." value="${f.query || ''}" 
-                           style="width: 100%; padding: 8px 15px 8px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card);"
+                           style="width: 100%; padding: 8px 15px 8px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg);"
                            oninput="app.filterHistory(this.value, document.getElementById('hist-filter-status').value, document.getElementById('hist-filter-seller').value, document.getElementById('hist-filter-start').value, document.getElementById('hist-filter-end').value)">
                 </div>
             </div>
