@@ -1476,6 +1476,7 @@ window.app = {
         // Búsqueda robusta del cliente para no perder código ni teléfono
         const customerInput = document.getElementById('quote-customer');
         const selectedCode = customerInput ? customerInput.getAttribute('data-selected-code') : '';
+        const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : '';
         
         let customerCode = '';
         if (selectedCode) {
@@ -1483,7 +1484,6 @@ window.app = {
         } else {
             // Fallback en caso de edición manual o que no se dispare onchange
             const customerClean = customer.trim().toLowerCase();
-            const selectedBranch = document.getElementById('quote-branch') ? document.getElementById('quote-branch').value : '';
             const clientObj = this.data.clientes.find(c =>
                 ((c.razonSocial || '').toLowerCase().trim() === customerClean ||
                 (c.nombreComercial || '').toLowerCase().trim() === customerClean) &&
