@@ -25,7 +25,7 @@ window.Views['import-history'] = (historial = []) => {
     <div class="card glass animate-slide-up">
         <div class="flex-between mb-4">
             <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
-                <i data-lucide="file-clock" style="color: var(--primary-color); width: 24px; height: 24px;"></i> Historial de Cargas desde Excel
+                <i data-lucide="file-clock" style="color: var(--primary-color); width: 24px; height: 24px;"></i> Historial de Importaciones desde Excel
             </h2>
             <span class="badge" style="background: var(--primary-color); padding: 6px 14px; font-weight: 700;">Total Cargas: ${historial.length}</span>
         </div>

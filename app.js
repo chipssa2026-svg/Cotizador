@@ -591,7 +591,7 @@ window.app = {
         const area = document.getElementById('content-area');
         const title = document.getElementById('view-title');
 
-        const titles = { 'login': 'Acceso al Sistema', 'dashboard': 'Dashboard', 'inventory': 'Inventario', 'customers': 'Clientes', 'new-quote': 'Nueva Cotización', 'history': 'Historial', 'preview': 'Vista Previa', 'sellers': 'Vendedores', 'users': 'Usuarios', 'import-history': 'Historial de Cargas' };
+        const titles = { 'login': 'Acceso al Sistema', 'dashboard': 'Dashboard', 'inventory': 'Inventario', 'customers': 'Clientes', 'new-quote': 'Nueva Cotización', 'history': 'Historial de Cotizaciones', 'preview': 'Vista Previa', 'sellers': 'Vendedores', 'users': 'Usuarios', 'import-history': 'Historial de Importaciones' };
 
         // Seguridad: Verificar permiso antes de renderizar
         if (view !== 'login' && view !== 'preview' && !this.hasAccess(view)) {
