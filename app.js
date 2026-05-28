@@ -295,12 +295,38 @@ window.app = {
             nextNumber: parseInt(getVal(configObj, ['proxima', 'number', 'next'])) || 859,
             lastProductImport: getVal(configObj, ['productimport', 'productos_fecha']),
             lastCustomerImport: getVal(configObj, ['customerimport', 'clientes_fecha']),
-            lastSellerImport: getVal(configObj, ['sellerimport', 'vendedores_fecha'])
+            lastSellerImport: getVal(configObj, ['sellerimport', 'vendedores_fecha']),
+            importHistoryJson: getVal(configObj, ['importhistoryjson', 'historial_json', 'historialjson']) || ''
         };
 
         this.data.lastProductImport = this.data.config.lastProductImport || data.lastProductImport || null;
         this.data.lastCustomerImport = this.data.config.lastCustomerImport || data.lastCustomerImport || null;
         this.data.lastSellerImport = this.data.config.lastSellerImport || data.lastSellerImport || null;
+
+        // Historial de Importaciones (Doble Seguridad)
+        let historial = data.historial || [];
+        if (historial.length === 0 && this.data.config.importHistoryJson) {
+            try {
+                historial = JSON.parse(this.data.config.importHistoryJson);
+            } catch (e) {
+                console.error("Error parsing import history json:", e);
+            }
+        }
+        this.data.historial = (historial || []).map(h => {
+            const getValH = (obj, words) => {
+                const k = Object.keys(obj).find(key => words.some(w => key.toLowerCase().includes(w)));
+                return k ? obj[k] : '';
+            };
+            return {
+                id: h.id || getValH(h, ['id']) || Date.now() + Math.random(),
+                fechaHora: h.fechaHora || getValH(h, ['fechahora', 'fecha', 'hora']) || '',
+                usuario: h.usuario || getValH(h, ['usuario', 'user']) || 'Sistema',
+                tipoImportacion: h.tipoImportacion || getValH(h, ['tipoimportacion', 'tipo', 'info']) || '',
+                cantidad: parseInt(h.cantidad || getValH(h, ['cantidad', 'cant'])) || 0,
+                archivo: h.archivo || getValH(h, ['archivo', 'file']) || 'N/A',
+                detalles: h.detalles || getValH(h, ['detalles', 'notes', 'detalle']) || ''
+            };
+        });
     },
 
     async saveDB(tableKey = null) {
@@ -374,8 +400,21 @@ window.app = {
             "nextNumber": this.data.config.nextNumber,
             "lastProductImport": this.data.lastProductImport,
             "lastCustomerImport": this.data.lastCustomerImport,
-            "lastSellerImport": this.data.lastSellerImport
+            "lastSellerImport": this.data.lastSellerImport,
+            "importHistoryJson": JSON.stringify(this.data.historial || [])
         };
+
+        if (tableKey === 'historial' || !tableKey) {
+            payload.historial = (this.data.historial || []).map(h => ({
+                "ID": h.id,
+                "FechaHora": h.fechaHora,
+                "Usuario": h.usuario,
+                "TipoImportacion": h.tipoImportacion,
+                "Cantidad": h.cantidad,
+                "Archivo": h.archivo,
+                "Detalles": h.detalles
+            }));
+        }
 
         try {
             return fetch(this.scriptUrl, {
@@ -417,8 +456,23 @@ window.app = {
                     price: this.parseNum(get(['precio', 'valor', 'price']))
                 };
             });
+            
+            // Registrar log de importación
+            const logEntry = {
+                id: Date.now(),
+                fechaHora: this.getAppTimestamp(),
+                usuario: this.data.currentUser.Usuario || this.data.currentUser.Nombre || 'Desconocido',
+                tipoImportacion: 'Inventario',
+                cantidad: this.data.productos.length,
+                archivo: file.name || 'plantilla_inventario.xlsx',
+                detalles: `Importación exitosa de ${this.data.productos.length} productos desde Excel.`
+            };
+            if (!this.data.historial) this.data.historial = [];
+            this.data.historial.unshift(logEntry);
+
             this.data.lastProductImport = this.getAppTimestamp();
             this.saveDB(); this.render('inventory');
+            this.notify('Productos importados y registrados en el historial', 'success');
         };
         reader.readAsArrayBuffer(file);
     },
@@ -464,10 +518,24 @@ window.app = {
                     email: get(['correo', 'email', 'mail'])
                 };
             });
+
+            // Registrar log de importación
+            const logEntry = {
+                id: Date.now(),
+                fechaHora: this.getAppTimestamp(),
+                usuario: this.data.currentUser.Usuario || this.data.currentUser.Nombre || 'Desconocido',
+                tipoImportacion: 'Clientes',
+                cantidad: this.data.clientes.length,
+                archivo: file.name || 'plantilla_clientes.xlsx',
+                detalles: `Importación exitosa de ${this.data.clientes.length} clientes desde Excel.`
+            };
+            if (!this.data.historial) this.data.historial = [];
+            this.data.historial.unshift(logEntry);
+
             this.data.lastCustomerImport = this.getAppTimestamp();
             this.saveDB();
             this.render('customers');
-            this.notify('Clientes importados correctamente', 'success');
+            this.notify('Clientes importados y registrados en el historial', 'success');
         };
         reader.readAsArrayBuffer(file);
     },
@@ -495,8 +563,23 @@ window.app = {
                     name: get(['nombre', 'vendedor', 'name'])
                 };
             });
+
+            // Registrar log de importación
+            const logEntry = {
+                id: Date.now(),
+                fechaHora: this.getAppTimestamp(),
+                usuario: this.data.currentUser.Usuario || this.data.currentUser.Nombre || 'Desconocido',
+                tipoImportacion: 'Vendedores',
+                cantidad: this.data.vendedores.length,
+                archivo: file.name || 'plantilla_vendedores.xlsx',
+                detalles: `Importación exitosa de ${this.data.vendedores.length} vendedores desde Excel.`
+            };
+            if (!this.data.historial) this.data.historial = [];
+            this.data.historial.unshift(logEntry);
+
             this.data.lastSellerImport = this.getAppTimestamp();
             this.saveDB(); this.render('sellers');
+            this.notify('Vendedores importados y registrados en el historial', 'success');
         };
         reader.readAsArrayBuffer(file);
     },
@@ -508,7 +591,7 @@ window.app = {
         const area = document.getElementById('content-area');
         const title = document.getElementById('view-title');
 
-        const titles = { 'login': 'Acceso al Sistema', 'dashboard': 'Dashboard', 'inventory': 'Inventario', 'customers': 'Clientes', 'new-quote': 'Nueva Cotización', 'history': 'Historial', 'preview': 'Vista Previa', 'sellers': 'Vendedores', 'users': 'Usuarios' };
+        const titles = { 'login': 'Acceso al Sistema', 'dashboard': 'Dashboard', 'inventory': 'Inventario', 'customers': 'Clientes', 'new-quote': 'Nueva Cotización', 'history': 'Historial', 'preview': 'Vista Previa', 'sellers': 'Vendedores', 'users': 'Usuarios', 'import-history': 'Historial de Cargas' };
 
         // Seguridad: Verificar permiso antes de renderizar
         if (view !== 'login' && view !== 'preview' && !this.hasAccess(view)) {
@@ -553,6 +636,7 @@ window.app = {
             else if (view === 'customers') dataForView = this.data.clientes;
             else if (view === 'sellers') dataForView = this.data.vendedores;
             else if (view === 'users') dataForView = this.data; // Pasamos todo el objeto data
+            else if (view === 'import-history') dataForView = this.data.historial;
             else if (view === 'new-quote') {
                 this.currentRecalledQuote = null;
                 dataForView = {
@@ -779,9 +863,9 @@ window.app = {
         if (!this.data.currentUser) return false;
         const role = (this.data.currentUser.Rol || this.data.currentUser.role || '').toUpperCase();
         const perms = {
-            'ADMINISTRADOR': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history', 'users'],
-            'GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history'],
-            'ASISTENTE DE GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history'],
+            'ADMINISTRADOR': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history', 'users', 'import-history'],
+            'GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history', 'import-history'],
+            'ASISTENTE DE GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history', 'import-history'],
             'VENDEDOR': ['dashboard', 'new-quote', 'history'],
             'FACTURACION': ['dashboard', 'history']
         };
