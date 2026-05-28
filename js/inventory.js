@@ -18,9 +18,10 @@ window.Views.inventory = (p = [], query = '') => {
         <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; gap: 1rem; margin-bottom: 1.5rem;">
             <div style="display:flex; align-items:center; gap:1rem;">
                 <input type="file" id="xl-input" style="display:none" onchange="app.importFromExcel(event)">
+                ${window.app.data.currentUser && window.app.data.currentUser.ImportarExcel ? `
                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('xl-input').click()">
                     <i data-lucide="file-up"></i> Importar de Excel
-                </button>
+                </button>` : ''}
                 <span class="badge" style="background:var(--primary-color)">Total Productos: ${p.length}</span>
             </div>
             <div class="search-bar" style="width: 300px; margin: 0; position: relative;">

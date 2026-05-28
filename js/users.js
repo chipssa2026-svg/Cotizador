@@ -35,6 +35,7 @@ window.Views.users = (d) => {
                         <th style="padding:15px; text-align:left; font-size:0.8rem; color:var(--text-muted);">NOMBRE COMPLETO</th>
                         <th style="padding:15px; text-align:left; font-size:0.8rem; color:var(--text-muted);">ROL ASIGNADO</th>
                         <th style="padding:15px; text-align:left; font-size:0.8rem; color:var(--text-muted);">VENDEDOR</th>
+                        <th style="padding:15px; text-align:center; font-size:0.8rem; color:var(--text-muted);">IMPORTAR EXCEL</th>
                         <th style="padding:15px; text-align:left; font-size:0.8rem; color:var(--text-muted);">CLAVE</th>
                         <th style="padding:15px; text-align:right; font-size:0.8rem; color:var(--text-muted);">ACCIÓN</th>
                     </tr>
@@ -49,6 +50,11 @@ window.Views.users = (d) => {
                             <td style="padding:15px; font-weight:600; color:var(--text-main);">${u.Nombre || u.name}</td>
                             <td style="padding:15px;"><span class="badge" style="background:var(--border-color); color:var(--text-main); padding:5px 12px; border-radius:20px; font-size:0.75rem; font-weight:800;">${u.Rol || u.role}</span></td>
                             <td style="padding:15px; font-weight:600; color:var(--text-muted);">${sellerName}</td>
+                            <td style="padding:15px; text-align:center;">
+                                <span class="badge" style="background:${u.ImportarExcel ? '#dcfce7' : '#fee2e2'}; color:${u.ImportarExcel ? '#166534' : '#991b1b'}; padding:5px 12px; border-radius:20px; font-size:0.75rem; font-weight:800;">
+                                    ${u.ImportarExcel ? 'SÍ' : 'NO'}
+                                </span>
+                            </td>
                             <td style="padding:15px; color:var(--text-muted);">••••••••</td>
                             <td style="padding:15px; text-align:right;">
                                 <div style="display:flex; gap:8px; justify-content:flex-end;">

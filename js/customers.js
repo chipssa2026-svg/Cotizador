@@ -22,10 +22,11 @@ window.Views.customers = (p = [], query = '') => {
     <div class="card glass">
         <div class="flex-between mb-4">
             <div style="display:flex; align-items:center; gap:1rem;">
+                ${window.app.data.currentUser && window.app.data.currentUser.ImportarExcel ? `
                 <label class="btn btn-secondary btn-sm" style="cursor:pointer">
                     <i data-lucide="file-up"></i> Importar de Excel
                     <input type="file" style="display:none" accept=".xlsx, .xls" onchange="app.importCustomersFromExcel(event)">
-                </label>
+                </label>` : ''}
                 <span class="badge" style="background:var(--primary-color)">Total Clientes: ${p.length}</span>
             </div>
             <div class="search-bar" style="width: 300px; margin: 0; position: relative;">

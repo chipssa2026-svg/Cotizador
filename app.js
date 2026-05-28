@@ -271,7 +271,21 @@ window.app = {
             name: getVal(s, ['nombre', 'vendedor', 'name'])
         }));
 
-        this.data.usuarios = data.usuarios || data.users || [];
+        this.data.usuarios = (data.usuarios || data.users || []).map(u => {
+            const getVal = (obj, words) => {
+                const k = Object.keys(obj).find(key => words.some(w => key.toLowerCase().includes(w)));
+                return k ? obj[k] : '';
+            };
+            const importVal = getVal(u, ['importar', 'import']);
+            return {
+                Usuario: u.Usuario || u.user || '',
+                Clave: u.Clave || u.pass || '',
+                Nombre: u.Nombre || u.name || '',
+                Rol: u.Rol || u.role || '',
+                CodigoVendedor: u.CodigoVendedor || u.sellerCode || '',
+                ImportarExcel: importVal !== undefined && importVal !== null && importVal !== '' ? (String(importVal).toUpperCase() === 'SI' || importVal === true || String(importVal).toUpperCase() === 'YES') : false
+            };
+        });
         
         // Normalización de Configuración (evitar que se pierda el correlativo)
         const rawConfig = data.config || {};
@@ -352,7 +366,8 @@ window.app = {
             "Clave": u.Clave || u.pass,
             "Nombre": u.Nombre || u.name,
             "Rol": u.Rol || u.role,
-            "CodigoVendedor": u.CodigoVendedor || u.sellerCode || ""
+            "CodigoVendedor": u.CodigoVendedor || u.sellerCode || "",
+            "ImportarExcel": u.ImportarExcel ? "SI" : "NO"
         }));
 
         payload.config = {
@@ -380,6 +395,10 @@ window.app = {
 
     // --- Importaciones Masivas (Desde Excel con SheetJS) ---
     async importFromExcel(e) {
+        if (!this.data.currentUser || !this.data.currentUser.ImportarExcel) {
+            this.notify('No tiene permisos para importar de Excel', 'error');
+            return;
+        }
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (evt) => {
@@ -405,6 +424,10 @@ window.app = {
     },
 
     async importCustomersFromExcel(e) {
+        if (!this.data.currentUser || !this.data.currentUser.ImportarExcel) {
+            this.notify('No tiene permisos para importar de Excel', 'error');
+            return;
+        }
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -450,6 +473,10 @@ window.app = {
     },
 
     async importSellersFromExcel(e) {
+        if (!this.data.currentUser || !this.data.currentUser.ImportarExcel) {
+            this.notify('No tiene permisos para importar de Excel', 'error');
+            return;
+        }
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = (evt) => {
@@ -605,6 +632,10 @@ window.app = {
                         </select>
                     </div>
                     <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Contraseña</label><input type="password" id="m-pass" placeholder="••••••••" style="width:100%;"></div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                        <input type="checkbox" id="m-import-excel" style="width:auto; cursor:pointer; transform:scale(1.2);">
+                        <label for="m-import-excel" style="color:var(--text-main); font-size:0.85rem; font-weight:600; cursor:pointer; margin:0;">Permitir Importar desde Excel</label>
+                    </div>
                 </div>
                 <div class="flex-end mt-6" style="gap:10px;">
                     <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
@@ -631,7 +662,8 @@ window.app = {
             Nombre: document.getElementById('m-name').value.trim(),
             Rol: document.getElementById('m-role').value,
             Clave: document.getElementById('m-pass').value,
-            CodigoVendedor: document.getElementById('m-role').value === 'Vendedor' ? document.getElementById('m-seller-code').value : ""
+            CodigoVendedor: document.getElementById('m-role').value === 'Vendedor' ? document.getElementById('m-seller-code').value : "",
+            ImportarExcel: document.getElementById('m-import-excel').checked
         };
         if (!u.Usuario || !u.Nombre || !u.Clave) return this.notify('Faltan campos', 'error');
         this.data.usuarios.unshift(u);
@@ -677,6 +709,10 @@ window.app = {
                         </select>
                     </div>
                     <div><label style="color:var(--text-muted); font-size:0.85rem; font-weight:600; display:block; margin-bottom:5px;">Contraseña</label><input type="password" id="m-pass" value="${u.Clave || u.pass}" style="width:100%;"></div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                        <input type="checkbox" id="m-import-excel" ${u.ImportarExcel ? 'checked' : ''} style="width:auto; cursor:pointer; transform:scale(1.2);">
+                        <label for="m-import-excel" style="color:var(--text-main); font-size:0.85rem; font-weight:600; cursor:pointer; margin:0;">Permitir Importar desde Excel</label>
+                    </div>
                 </div>
                 <div class="flex-end mt-6" style="gap:10px;">
                     <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('hidden')">Cancelar</button>
@@ -704,6 +740,7 @@ window.app = {
             u.Rol = document.getElementById('m-role').value;
             u.Clave = document.getElementById('m-pass').value;
             u.CodigoVendedor = u.Rol === 'Vendedor' ? document.getElementById('m-seller-code').value : "";
+            u.ImportarExcel = document.getElementById('m-import-excel').checked;
             this.notify('¡Datos actualizados!');
             document.getElementById('modal-container').classList.add('hidden');
             this.render('users');

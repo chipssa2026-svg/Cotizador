@@ -14,10 +14,11 @@ window.Views.sellers = (s, query = '') => {
     <div class="card glass">
         <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; gap: 1rem; margin-bottom: 1.5rem;">
             <div style="display:flex; align-items:center; gap:1rem;">
+                ${window.app.data.currentUser && window.app.data.currentUser.ImportarExcel ? `
                 <label class="btn btn-secondary btn-sm" style="cursor:pointer; margin:0;">
                     <i data-lucide="file-up"></i> Importar de Excel
                     <input type="file" style="display:none" accept=".xlsx, .xls" onchange="app.importSellersFromExcel(event)">
-                </label>
+                </label>` : ''}
                 <span class="badge" style="background:var(--primary-color)">Total Vendedores: ${s.length}</span>
             </div>
             <div class="search-bar" style="width: 300px; margin: 0; position: relative;">
