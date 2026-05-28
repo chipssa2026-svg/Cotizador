@@ -443,6 +443,24 @@ window.app = {
         reader.onload = (evt) => {
             const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
             const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
+            
+            if (!json || json.length === 0) {
+                this.notify('El archivo Excel está vacío', 'error');
+                return;
+            }
+            
+            const firstRow = json[0];
+            const k = Object.keys(firstRow);
+            const hasProductCol = k.some(key => ['producto', 'codigo', 'code', 'cod'].some(w => key.toLowerCase().includes(w)));
+            const hasDescCol = k.some(key => ['descripcion', 'desc', 'nombre'].some(w => key.toLowerCase().includes(w)));
+            const hasStockCol = k.some(key => ['existencia', 'stock', 'cantidad'].some(w => key.toLowerCase().includes(w)));
+            const hasPriceCol = k.some(key => ['precio', 'valor', 'price'].some(w => key.toLowerCase().includes(w)));
+            
+            if (!hasProductCol || !hasDescCol || !hasStockCol || !hasPriceCol) {
+                this.notify('Formato de Excel inválido. Debe contener columnas de Código/Producto, Descripción, Existencia y Precio.', 'error');
+                return;
+            }
+
             this.data.productos = json.map(p => {
                 const k = Object.keys(p);
                 const get = (words) => {
@@ -490,6 +508,22 @@ window.app = {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet);
+            
+            if (!json || json.length === 0) {
+                this.notify('El archivo Excel está vacío', 'error');
+                return;
+            }
+            
+            const firstRow = json[0];
+            const k = Object.keys(firstRow);
+            const hasIdCol = k.some(key => ['cliente', 'codigo', 'id', 'no.', 'code'].some(w => key.toLowerCase().includes(w)));
+            const hasNameCol = k.some(key => ['razonsocial', 'razon', 'social', 'nombre', 'comercial'].some(w => key.toLowerCase().includes(w)));
+            
+            if (!hasIdCol || !hasNameCol) {
+                this.notify('Formato de Excel inválido. Debe contener columnas de Código/Cliente y Razón Social o Nombre.', 'error');
+                return;
+            }
+
             this.data.clientes = json.map(c => {
                 const k = Object.keys(c);
                 const get = (words) => {
@@ -552,6 +586,22 @@ window.app = {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet);
+            
+            if (!json || json.length === 0) {
+                this.notify('El archivo Excel está vacío', 'error');
+                return;
+            }
+            
+            const firstRow = json[0];
+            const k = Object.keys(firstRow);
+            const hasIdCol = k.some(key => ['codigo', 'id', 'cod', 'code'].some(w => key.toLowerCase().includes(w)));
+            const hasNameCol = k.some(key => ['nombre', 'vendedor', 'name'].some(w => key.toLowerCase().includes(w)));
+            
+            if (!hasIdCol || !hasNameCol) {
+                this.notify('Formato de Excel inválido. Debe contener columnas de Código y Nombre del Vendedor.', 'error');
+                return;
+            }
+
             this.data.vendedores = json.map(s => {
                 const k = Object.keys(s);
                 const get = (words) => {
