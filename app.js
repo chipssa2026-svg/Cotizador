@@ -745,7 +745,7 @@ window.app = {
             'ADMINISTRADOR': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history', 'users'],
             'GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history'],
             'ASISTENTE DE GERENCIA': ['dashboard', 'inventory', 'customers', 'sellers', 'new-quote', 'history'],
-            'VENDEDOR': ['dashboard', 'inventory', 'new-quote', 'history'],
+            'VENDEDOR': ['dashboard', 'new-quote', 'history'],
             'FACTURACION': ['dashboard', 'history']
         };
         const allowed = perms[role] || ['dashboard'];
