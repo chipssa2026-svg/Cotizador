@@ -1,5 +1,5 @@
 /**
- * Chips, S.A. - Cotizador PRO (v2.2.1 - Historial Corregido)
+ * Chips, S.A. - Cotizador PRO (v2.2.0 - Arquitectura por Procesos)
  * Este archivo actúa como el núcleo central (Cerebro) del sistema.
  */
 
