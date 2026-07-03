@@ -1,17 +1,9 @@
 @echo off
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "dt=%%I"
-set "year=%dt:~0,4%"
-set "month=%dt:~4,2%"
-set "day=%dt:~6,2%"
-set "hour=%dt:~8,2%"
-set "min=%dt:~10,2%"
-set "sec=%dt:~12,2%"
-set "timestamp=%year%-%month%-%day%_%hour%-%min%-%sec%"
-set "timestamp=%timestamp: =0%"
+for /f "usebackq tokens=*" %%i in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'"`) do set "timestamp=%%i"
 set backupDir=_backups\%timestamp%
 
 if not exist _backups mkdir _backups
-mkdir %backupDir%
+mkdir "%backupDir%"
 
 :: Copiar archivos base
 copy app.js %backupDir% >nul
