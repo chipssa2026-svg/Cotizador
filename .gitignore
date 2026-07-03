@@ -1,9 +1,11 @@
 # Ignorar carpeta local de respaldos
 _backups/
 
-# Ignorar archivos del sistema
+# Ignorar archivos del sistema y de oficina
 .DS_Store
 Thumbs.db
+~$*
+*conflict*
 
 # Ignorar archivos temporales del editor
 .vscode/
